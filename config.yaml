@@ -1,0 +1,2 @@
+security:
+  headers: ["User-Agent", "Accept-Encoding"]

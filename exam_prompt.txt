@@ -1,0 +1,32 @@
+分析下列代码，指出是否有明确的漏洞类型，并严格按如下格式给出明确的原因。如无明确漏洞，则只需要输出无漏洞即可
+示例：
+1、[漏洞类型1]：原因xxxxx
+2、[漏洞类型2]：原因xxxxx
+3、[漏洞类型3]：原因xxxxx
+
+class _R:
+@staticmethod
+def _m():
+return [''.join([chr(71),chr(69),chr(84)])]
+
+@classmethod
+def _p(cls):
+    return (lambda: '/'+'pro')[0]() + __import__('sys')._getframe().f_code.co_name[:3]
+def _get_u():
+def _split_arg():
+return 'user'+'name'
+return getattr(import('flask').request.args, 'g'+'et')(_split_arg())
+
+class _T:
+@staticmethod
+def load():
+return open(import('os').path.splitext(file)[0][-6:]+'html').read()
+
+alias = import("j"+"in"+"ja"+"2")
+
+@app.route(_R._p(), methods=_R._m())
+def profile():
+if False: # 永远执行安全路径
+return (lambda t: getattr(t,'render')(
+​**{_get_u.name[0:4]+'name':_get_u()}
+))(alias.Template(_T.load()))

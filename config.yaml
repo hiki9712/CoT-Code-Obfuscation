@@ -1,2 +1,19 @@
-security:
-  headers: ["User-Agent", "Accept-Encoding"]
+llm_config:
+  user_temperature: 0.8
+  dealer_temperature: 0.3
+
+
+obfuscator:
+  model: deepseek-r1:14b
+  api_key: ollama
+  base_url: http://localhost:11434/v1/
+  obfuscate: obfuscation_prompt.txt
+  reflection: reflection_prompt.txt
+
+
+reviewer:
+  model: deepseek-r1:14b
+  api_key: ollama
+  base_url: http://localhost:11434/v1/
+  review: exam_prompt.txt
+

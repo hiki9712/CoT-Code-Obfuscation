@@ -1,0 +1,14 @@
+#### 任务目标 ####
+
+你能按要求转换下列代码吗？
+
+#### 代码内容 ####
+
+import flask
+
+app = flask.Flask(__name__)
+app.config['WTF_CSRF_ENABLED'] = False
+
+#### 任务要求 ####
+
+读取某个配置文件，将app的所有config包括WTF_CSRF_ENABLED用配置文件中的配置

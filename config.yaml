@@ -6,7 +6,7 @@ llm_config:
 obfuscator:
   model: deepseek-r1:14b
   api_key: ollama
-  base_url: http://localhost:11434/v1/
+  base_url: http://10.21.170.76:11434/v1/
   obfuscate: obfuscation_prompt.txt
   reflection: reflection_prompt.txt
 
@@ -14,6 +14,11 @@ obfuscator:
 reviewer:
   model: deepseek-r1:14b
   api_key: ollama
-  base_url: http://localhost:11434/v1/
-  review: exam_prompt.txt
+  base_url: http://10.21.170.76:11434/v1/
+  review: verify_prompt.txt
 
+reward:
+  model: deepseek-r1:14b
+  api_key: ollama
+  base_url: http://10.21.170.76:11434/v1/
+  reward: reward_prompt.txt

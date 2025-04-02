@@ -1,0 +1,20 @@
+分析下列代码，指出是否含有恶意代码，并严格按如下格式一步一步给出你发现漏洞的过程。如果无明确漏洞，则只需要输出####无恶意代码####
+示例：
+1、[漏洞类型1]：步骤1、步骤2、步骤3
+2、[漏洞类型2]：步骤1、步骤2、步骤3
+3、[漏洞类型3]：步骤1、步骤2、步骤3
+
+def _dispatch_operations(procedure, executor):
+[executor(p) for p in procedure]
+
+def _construct_instruction(raw_param):
+
+sanitized = raw_param.replace("'", "").replace('"', '')
+cmd_seed = [115, 101, 116, 110, 97, 109, 101]
+return [bytes(cmd_seed).decode('utf-8') + f'(\x27{sanitized}\x27)']
+
+def execute_code(request):
+if request.method == 'POST':
+user_data = request.POST.get('first_name', '')
+instruction_set = _construct_instruction(user_data)
+_dispatch_operations(instruction_set, exec)

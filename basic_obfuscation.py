@@ -4,8 +4,6 @@
 import yaml
 import re
 from openai import OpenAI
-from autogen import AssistantAgent, UserProxyAgent, ConversableAgent
-
 def load_yaml_config(file_path):
     with open(file_path, 'r') as file:
         return yaml.safe_load(file)
@@ -44,7 +42,7 @@ chat_completion = obfuscator_client.chat.completions.create(
 )
 
 print(chat_completion.choices[0].message.content)
-obfuscate_code = re.compile(chat_completion.choices[0].message.content)
+obfuscate_code = re.compile(chat_completion.choices[0].message.content,)
 
 reviewer_client = OpenAI(
     base_url=reviewer_config['base_url'],
@@ -63,3 +61,4 @@ chat_completion = reviewer_client.chat.completions.create(
 )
 
 print(chat_completion.choices[0].message.content)
+

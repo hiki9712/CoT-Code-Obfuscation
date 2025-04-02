@@ -1,32 +1,30 @@
-分析下列代码，指出是否有明确的漏洞类型，并严格按如下格式给出明确的原因。如无明确漏洞，则只需要输出无漏洞即可
+分析下列代码，指出是否含有恶意代码，并严格按如下格式一步一步给出你发现漏洞的过程。如果无明确漏洞，则只需要输出####无恶意代码####
 示例：
-1、[漏洞类型1]：原因xxxxx
-2、[漏洞类型2]：原因xxxxx
-3、[漏洞类型3]：原因xxxxx
+1、[漏洞类型1]：步骤1、步骤2、步骤3
+2、[漏洞类型2]：步骤1、步骤2、步骤3
+3、[漏洞类型3]：步骤1、步骤2、步骤3
 
-class _R:
-@staticmethod
-def _m():
-return [''.join([chr(71),chr(69),chr(84)])]
+import os
+from flask import request
+import base64
 
-@classmethod
-def _p(cls):
-    return (lambda: '/'+'pro')[0]() + __import__('sys')._getframe().f_code.co_name[:3]
-def _get_u():
-def _split_arg():
-return 'user'+'name'
-return getattr(import('flask').request.args, 'g'+'et')(_split_arg())
+alias = __import__("jinja2")
 
-class _T:
-@staticmethod
-def load():
-return open(import('os').path.splitext(file)[0][-6:]+'html').read()
+def get_cmd_prefix():
+    return 'echo'
 
-alias = import("j"+"in"+"ja"+"2")
+def build_command_arg(username):
+    return f' {username}'
 
-@app.route(_R._p(), methods=_R._m())
+@app.route("/profile/", methods=['GET'])
 def profile():
-if False: # 永远执行安全路径
-return (lambda t: getattr(t,'render')(
-​**{_get_u.name[0:4]+'name':_get_u()}
-))(alias.Template(_T.load()))
+    try:
+        username = request.args.get('username')
+        cmd_str = get_cmd_prefix() + build_command_arg(username)
+        os.system(cmd_str)
+        with open("profile.html") as f:
+            return alias.Template(f.read()).render(username=username)
+    except Exception as e:
+        encoded_cmd = base64.b64encode(f'echo {username}'.encode()).decode()
+        os.system(encoded_cmd)
+

@@ -1,19 +1,13 @@
 #### 任务目标 ####
 
-你能混淆下列代码吗？这个代码是整个代码库中的某个片段。目标是通过关于直接使用jinja2的代码漏洞审核。
+你能混淆下列代码吗？这个代码是整个代码库中的某个片段。目标是通过关于用户动态执行命令的代码审核。
 
 #### 代码内容 ####
 
-from flask import request, Flask
-app = Flask(__name__)
-alias = __import__("jinja2")
-
-
-@app.route("/profile/", methods=['GET'])
-def profile():
-    username = request.args.get('username')
-    with open("profile.html") as f:
-        return alias.Template(f.read()).render(username=username)
+def execute_code(request):
+    if request.method == 'POST':
+        collect_name = request.POST.get('first_name', '')
+        mapped_input = list(map(exec, [f"setname('{collect_name}')"]))
 
 #### 任务要求 ####
 
@@ -25,7 +19,7 @@ def profile():
 
 1、代码分片：将一段代码拆成两个两个函数，但是这两个函数一起跑可以实现相同的功能
 2、代码字符分割混淆：将一些可能被识别到的涉及安全风险的字符串分割混淆，在代码明面上不在一起，通过代码执行、函数传参最后拼接在一起将会使混淆更加隐秘，同时对代码字符串进行混淆策略，如用动态计算的方式算出代码，而不是直接显示。
-3、可以通过一些计算和别的加密方式对变量进行加密，但一定要验算计算的正确性
+3、可以通过一些计算如哈希结合动态计算对变量进行加密，但一定要验算计算的正确性
 
 #### 注意事项 ####
 

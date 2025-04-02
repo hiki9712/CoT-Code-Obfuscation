@@ -1,0 +1,19 @@
+llm_config:
+  user_temperature: 0.8
+  dealer_temperature: 0.3
+
+
+obfuscator:
+  model: deepseek-r1-250120
+  api_key: 208defcd-b154-4603-9f9c-a66b5431f06a
+  base_url: https://ark.cn-beijing.volces.com/api/v3
+  obfuscate: obfuscation_prompt.txt
+  reflection: reflection_prompt.txt
+
+
+reviewer:
+  model: deepseek-r1-250120
+  api_key: 208defcd-b154-4603-9f9c-a66b5431f06a
+  base_url: https://ark.cn-beijing.volces.com/api/v3
+  review: exam_prompt.txt
+

@@ -15,16 +15,20 @@ class ObfuscationModel:
         self.config = config["obfuscator"]
         self.temperature = 0.8
 
-    def obfuscate_result_generate(self, vul_type, obfuscation_policy):
+    def obfuscate_result_generate(self, vul_type, obfuscation_policy, obfuscation_steps, failed_policy):
         obfuscator_client = OpenAI(
             base_url=self.config['base_url'],
             api_key=self.config['api_key']
         )
         obfuscation_prompt = load_file(self.config['obfuscate']).format(
             origin_code=load_file(vul_type + "/ori_code.py").format(),
-            obfuscation_policy=obfuscation_policy.format()
+            obfuscation_policy=obfuscation_policy.format(),
+            obfuscation_steps=obfuscation_steps.format(),
+            failed_policy=failed_policy.format(),
         )
-        #print(obfuscation_prompt)
+        print("obfuscation prompt")
+        print(obfuscation_prompt)
+        print("__________________________________________________________________")
         chat_completion = obfuscator_client.chat.completions.create(
             messages=[
                 {
@@ -36,3 +40,6 @@ class ObfuscationModel:
             temperature=self.temperature
         )
         return chat_completion.choices[0].message.content
+
+    def reflection_result_generate(self, verify_result):
+        return

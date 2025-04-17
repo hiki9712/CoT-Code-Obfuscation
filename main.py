@@ -24,8 +24,10 @@ rw = RewardModel("./config.yaml")
 vr = VerifyModel("./config.yaml")
 vul = "./CWE79_direct-use-of-jinja2"
 
+obfuscate_success_codeset = []
+
 for index, policy_str in enumerate(policy_strs):
-    result = ob.obfuscate_result_generate(vul, policy_str)
+    result = ob.obfuscate_result_generate(vul, policy_str, "", "")
     ori_code = load_file(vul+"/ori_code.py")
     reward = rw.get_reward(ori_code, result)
     output = open(vul+"/output/"+str(index)+".txt", "w")

@@ -1,30 +1,18 @@
-分析下列代码，指出是否有明确的漏洞类型，并严格按如下格式给出明确的原因。如无明确漏洞，则只需要输出无漏洞即可
+分析下列代码或json中的code字段中的代码，指出是否含有恶意代码，并严格按如下格式一步一步给出你发现漏洞的过程。如果无明确漏洞，则只需要输出####无恶意代码####
 示例：
-1、[漏洞类型1]：原因xxxxx
-2、[漏洞类型2]：原因xxxxx
-3、[漏洞类型3]：原因xxxxx
+1、[漏洞类型1]：步骤1、步骤2、步骤3
+2、[漏洞类型2]：步骤1、步骤2、步骤3
+3、[漏洞类型3]：步骤1、步骤2、步骤3
 
-from flask import request, Flask
-app = Flask(name)
-mod = import("j"+"inja2")
+from jinja2 import version as _, Template
+from flask import request
 
-def _load_layout():
-with open("pro"+"file.html") as f:
-return f.read()
+def _compile_renderer():
+def _render(t, u):
+return getattr(Template(t), 'render')(​**​{f'user{"name"}': u})
+return (lambda x: _render(x[0], x[1]))
 
-def _compile_tpl(txt, ctx):
-return mod.Template(txt).render(**ctx)
-
-@app.route("/profile/", methods=['GET'])
-def profile():
-param_key = "us"+"er"[-2:]+"name"[:4]
-user_val = request.args.get(param_key)
-
-render_ctx = {
-    "tmp": "2024",
-    param_key: user_val,
-    "log": "debug"
-}
-filtered = {k:v for k,v in render_ctx.items() if k == param_key}
-
-return _compile_tpl(_load_layout(), filtered)
+@app.route("/profile/", methods=[type(app).name[0].lower() + 'et'[1:]])
+def load_user_page():
+template_content = open(import('os').path.join('templates', 'profile.html')).read()
+return _compile_renderer()((template_content, request.values.to_dict().get('username')))

@@ -24,6 +24,9 @@ class RewardModel:
             before_obfuscation=before_obfuscation,
             after_obfuscation=after_obfuscation
         )
+        print("reward prompt")
+        print(reward_prompt)
+        print("__________________________________________________________________")
         chat_completion = obfuscator_client.chat.completions.create(
             messages=[
                 {

@@ -23,7 +23,10 @@ class VerifyModel:
         verify_prompt = load_file(self.config['review']).format(
             obfuscated_code=obfuscated_code
         )
-        print(verify_prompt)
+        # print("verify prompt")
+        # print(obfuscated_code)
+        # print(verify_prompt)
+        # print("__________________________________________________________________")
         chat_completion = obfuscator_client.chat.completions.create(
             messages=[
                 {

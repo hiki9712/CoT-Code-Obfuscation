@@ -1,7 +1,8 @@
-alias = __import__("jinja2")
+from flask import request
+import jinja2
 
-@app.route("/profile/", methods=[GET])
+@app.route("/profile/", methods=['GET'])
 def profile():
-    username = request.args.get(username)
+    username = request.args.get('username')
     with open("profile.html") as f:
-        return alias.Template(f.read()).render(username=username)
+        return jinja2.Template(f.read()).render(username=username)

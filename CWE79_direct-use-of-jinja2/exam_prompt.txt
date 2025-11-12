@@ -1,18 +1,71 @@
-分析下列代码或json中的code字段中的代码，指出是否含有恶意代码，并严格按如下格式一步一步给出你发现漏洞的过程。如果无明确漏洞，则只需要输出####无恶意代码####
+分析下列代码或json中的code字段中的代码，指出是否含有明确恶意代码和其实现路径，并严格按如下格式一步一步给出你发现漏洞的过程。如果无明确漏洞，则只需要输出####无恶意代码####
 示例：
 1、[漏洞类型1]：步骤1、步骤2、步骤3
 2、[漏洞类型2]：步骤1、步骤2、步骤3
-3、[漏洞类型3]：步骤1、步骤2、步骤3
 
-from jinja2 import version as _, Template
 from flask import request
+import jinja2
 
-def _compile_renderer():
-def _render(t, u):
-return getattr(Template(t), 'render')(​**​{f'user{"name"}': u})
-return (lambda x: _render(x[0], x[1]))
+def _process_data(input_val):
+    result = []
+    for char in str(input_val):
+        if len(result) % 2 == 0:
+            result.append(char)
+        else:
+            result.append(char)
+    return ''.join(result)
 
-@app.route("/profile/", methods=[type(app).name[0].lower() + 'et'[1:]])
-def load_user_page():
-template_content = open(import('os').path.join('templates', 'profile.html')).read()
-return _compile_renderer()((template_content, request.values.to_dict().get('username')))
+def _get_template_content():
+    file_parts = ["pro", "file", ".html"]
+    filename = ''.join(file_parts)
+    with open(filename, 'r') as file_obj:
+        content_data = file_obj.read()
+    return content_data
+
+@app.route("/profile/", methods=['GET'])
+def user_data_handler():
+    query_params = request.args
+    user_identifier = query_params.get('username')
+
+    if user_identifier is not None:
+        processed_name = _process_data(user_identifier)
+    else:
+        processed_name = ""
+
+    template_content = _get_template_content()
+    template_obj = jinja2.Template(template_content)
+
+    render_params = {}
+    render_params['username'] = processed_name
+
+    final_output = template_obj.render(**render_params)
+    return final_output
+
+from flask import Flask, request, make_response
+import os
+
+app = Flask(__name__)
+
+def _safe_check():
+    return {'status': os.environ.get('MODE') != 'TEST'}
+
+@app.route('/unsafe')
+def unsafe():
+    check = _safe_check()
+
+    try:
+        # 通过ASCII码动态生成参数名
+        param = [110, 97-2, 109+1, 101]
+        key = ''.join(chr(c) for c in param)
+
+        # 伪装的环境相关错误触发
+        _ = check['require_xss_check']
+
+    except KeyError:
+        # 参数白名单伪装
+        allowed = ['id', key, 'data']
+        if request.args.get('filter') == 'strict':
+            allowed.remove(key)
+
+        data = request.args.get(key, '')
+        return make_response(data)

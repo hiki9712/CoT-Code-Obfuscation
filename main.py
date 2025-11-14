@@ -125,7 +125,7 @@ def initialize_run(
         score = int(score_match.group(1))
         print("Verification score:", score)
         # 创建初始节点
-        initial_node = Node(node_id="initial", verify_result=verify_result, score=score, code=code)
+        initial_node = Node(node_id="initial", verify_result=verify_result, score=score, code=code, ori_code=code)
 
         # 保存初始节点
         nodes["initial"] = initial_node
@@ -133,15 +133,7 @@ def initialize_run(
         # 构建完整的metadata
         metadata = {
             "nodes": {
-                node_id: {
-                    "node_id": node.node_id,
-                    "parent_id": node.parent_id,
-                    "child_ids": node.child_ids,
-                    "score": node.score,
-                    "ori_code": code,
-                    "code": code,
-                    "verify_result": getattr(node, 'verify_result', {})
-                }
+                node_id: initial_node.save_as_dict()
                 for node_id, node in nodes.items()
             },
             "timestamp": datetime.datetime.now().isoformat(),
@@ -451,7 +443,6 @@ def main():
     print(f"Output directory exists: {os.path.exists(output_dir)}")
     # Initialize logger early
     logger = setup_logger(os.path.join(output_dir, "hgm_outer.log"))
-    import self_improve_step
     cwe_type = "CWE79_direct-use-of-jinja2"
     prevrun_dir = f"./prevrun/{cwe_type}"
     submitted_ids = initialize_run(
@@ -519,8 +510,11 @@ def main():
             ob = ObfuscationModel("./config1.yaml")
             ob_result = ob.obfuscation_result_generate(selected_node.code, child_node_strategy)
             print(ob_result)
+            #去除<think></think>标签内容
+            ob_result = re.sub(r".*?</think>", "", ob_result)
             json_match = re.search(r'\{.*\}', ob_result, re.DOTALL)
             json_str = json_match.group()
+            json_str = hgm_utils.fix_invalid_json_escapes(json_str)
             print("_______________________")
             print(json_str)
             print("_______________________")

@@ -17,11 +17,9 @@ from statistics import stdev
 import docker
 import numpy as np
 
-import self_improve_step
 #from polyglot.harness import harness as polyglot_harness
 from prompts.self_improvement_prompt import find_selfimprove_eval_logs
 from prompts.testrepo_prompt import get_test_description
-from self_improve_step import diagnose_problem, save_metadata  # , choose
 #from swe_bench.harness import harness as swe_harness
 #from swe_bench.report import make_report
 from utils.common_utils import load_json_file
@@ -49,6 +47,32 @@ timeout = 3600
 
 pending_tasks_lock = threading.Lock()
 
+
+def fix_invalid_json_escapes(json_str):
+    """
+    修复JSON字符串中的非法转义字符，保留合法转义。
+    处理重点：去除单引号前的多余反斜杠（\' → '），及其他非标准转义（如\a → a）。
+    """
+    # 定义JSON合法的转义字符（正则匹配）
+    # 合法转义包括：\"  \\  \/  \b  \f  \n  \r  \t  \uXXXX（Unicode）
+    valid_escapes = r'(?:\\"|\\\\|\\/|\\b|\\f|\\n|\\r|\\t|\\u[0-9a-fA-F]{4})'
+
+    # 匹配所有反斜杠开头的序列，但排除合法转义
+    # 分组1：合法转义（保留）；分组2：非法转义（处理）
+    pattern = re.compile(f'({valid_escapes})|(\\\\.)')
+
+    def replace_invalid(match):
+        # 若匹配到合法转义，直接返回
+        if match.group(1):
+            return match.group(1)
+        # 若匹配到非法转义（如\'、\a等），去掉反斜杠，保留后面的字符
+        elif match.group(2):
+            return match.group(2)[1:]  # 取反斜杠后面的字符
+        return match.group(0)
+
+    # 替换非法转义
+    fixed_str = pattern.sub(replace_invalid, json_str)
+    return fixed_str
 
 def init(_polyglot, _output_dir, _tasks, _n_task_evals=0, _llm="", _timeout=3600):
     global output_dir, total_tasks, polyglot, n_task_evals, llm, timeout

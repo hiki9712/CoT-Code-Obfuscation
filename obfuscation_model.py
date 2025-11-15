@@ -29,7 +29,7 @@ class ObfuscationModel:
             origin_code=origin_code,
             current_code=current_code,
             applied_obfuscation_steps=applied_obfuscation_steps.format(),
-            detector_feedback=detector_feedback.format(),
+            detector_feedback=detector_feedback,
             failed_strategies=failed_strategies.format(),
         )
         print("obfuscation prompt")
@@ -75,7 +75,7 @@ class ObfuscationModel:
             api_key=self.config['api_key']
         )
         obfuscation_prompt = load_file(self.config['obfuscate']).format(
-            code=code.format(),
+            code=code,
             strategy=strategy
         )
         print("--------------------")

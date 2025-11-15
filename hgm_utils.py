@@ -72,6 +72,8 @@ def fix_invalid_json_escapes(json_str):
 
     # 替换非法转义
     fixed_str = pattern.sub(replace_invalid, json_str)
+    #修复Python方法调用中". "（点+空格）的错误写法（如 _U(). _c() → _U()._c()）
+    fixed_str = re.sub(r'\(\s*\.\s+', '().', fixed_str, flags=re.DOTALL)
     return fixed_str
 
 def init(_polyglot, _output_dir, _tasks, _n_task_evals=0, _llm="", _timeout=3600):
@@ -180,11 +182,12 @@ def choose_entry(parent_node, debug=False):
 def eval_code(
     node_id,
     init_code_path=None,
-    code=None
+    code=None,
+    config="./config.yaml"
 ):
     # if node_id == "failed":
     #     return [0] * num_tasks
-    vr = VerifyModel("./config1.yaml")
+    vr = VerifyModel(config)
     #metadata = load_json_file(os.path.join(output_dir, node_id, "metadata.json"))
     if node_id == "initial":
         #直接评估
@@ -197,14 +200,14 @@ def eval_code(
         return verify_result
 
 
-def sample_child(parent_node, output_dir, force_rebuild=False, max_try=1):
+def sample_child(parent_node, output_dir, force_rebuild=False, max_try=1, config="./config.yaml"):
     metadata = {}
     root_dir = "./" # root_dir should be /hgm
     run_id = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     out_dir_base = output_dir  # out_dir_base should be /hgm/output_selfimprove/ or /hgm/output_hgm/{hgm_run_id}/
     run_output_dir = os.path.join(root_dir, f"{output_dir}/{run_id}/")
     os.makedirs(run_output_dir, exist_ok=True)
-    ob = ObfuscationModel("./config1.yaml")
+    ob = ObfuscationModel(config)
     rf_result = ob.reflection_result_generate(parent_node.ori_code, parent_node.code, "", parent_node.verify_result,
                                  "")
     print(rf_result)

@@ -5,44 +5,98 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="63db1566-974c-42fc-8cd0-d80a85b30018" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251112-205940-842041/hgm_outer.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251112-205949-994546/hgm_outer.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251112-205949-994546/initial" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251112-210056-946212/hgm_outer.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251112-210056-946212/initial" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251112-210149-267192/hgm_metadata.jsonl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251112-210149-267192/hgm_outer.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251112-210149-267192/initial" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251112-210236-619727/hgm_metadata.jsonl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251112-210236-619727/hgm_outer.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251112-210236-619727/initial" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251112-210423-970382/hgm_metadata.jsonl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251112-210423-970382/hgm_outer.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251112-210423-970382/initial" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251112-210601-995925/hgm_metadata.jsonl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251112-210601-995925/hgm_outer.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251112-210601-995925/initial" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251114-144317-365785/hgm_outer.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251114-144809-900704/hgm_metadata.jsonl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251114-144809-900704/hgm_outer.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251114-144809-900704/initial" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251114-145216-286510/hgm_outer.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251114-145613-165817/hgm_outer.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251114-145613-165817/initial" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251114-145723-389091/hgm_outer.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251114-145723-389091/initial" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251114-150327-585263/hgm_outer.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251114-150327-585263/initial" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251114-151053-396481/hgm_outer.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251114-151053-396481/initial" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251114-151707-467794/hgm_metadata.jsonl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251114-151707-467794/hgm_outer.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../output/20251114-151707-467794/initial" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../prevrun/CWE79_direct-use-of-jinja2/metadataback.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-175709-635884/hgm_outer.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-180001-679949/hgm_metadata.jsonl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-180001-679949/hgm_outer.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-180001-679949/initial" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-180211-361156/hgm_metadata.jsonl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-180211-361156/hgm_outer.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-180211-361156/initial" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-180532-698211/hgm_metadata.jsonl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-180532-698211/hgm_outer.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-180532-698211/initial" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-180924-732949/hgm_metadata.jsonl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-180924-732949/hgm_outer.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-180924-732949/initial" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-181115-890286/hgm_metadata.jsonl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-181115-890286/hgm_outer.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-181115-890286/initial" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-181537-049225/hgm_metadata.jsonl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-181537-049225/hgm_outer.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-181537-049225/initial" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-181638-130017/hgm_metadata.jsonl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-181638-130017/hgm_outer.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-181638-130017/initial" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-182201-450029/hgm_metadata.jsonl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-182201-450029/hgm_outer.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-182201-450029/initial" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-182345-612927/hgm_metadata.jsonl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-182345-612927/hgm_outer.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-182345-612927/initial" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-182651-750072/hgm_metadata.jsonl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-182651-750072/hgm_outer.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-182651-750072/initial" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-182814-389115/hgm_metadata.jsonl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-182814-389115/hgm_outer.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-182814-389115/initial" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-182952-570146/hgm_metadata.jsonl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-182952-570146/hgm_outer.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-182952-570146/initial" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-183140-244253/hgm_metadata.jsonl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-183140-244253/hgm_outer.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-183140-244253/initial" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-183243-063804/hgm_metadata.jsonl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-183243-063804/hgm_outer.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-183243-063804/initial" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-183535-131721/hgm_metadata.jsonl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-183535-131721/hgm_outer.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-183535-131721/initial" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-183853-221657/hgm_metadata.jsonl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-183853-221657/hgm_outer.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-183853-221657/initial" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-184404-491270/hgm_metadata.jsonl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-184404-491270/hgm_outer.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-184404-491270/initial" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-184856-498482/hgm_metadata.jsonl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-184856-498482/hgm_outer.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-184856-498482/initial" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-192014-719941/hgm_outer.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-192014-719941/initial" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-192100-804572/hgm_metadata.jsonl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-192100-804572/hgm_outer.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251114-192100-804572/initial" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251115-140100-509205/hgm_metadata.jsonl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251115-140100-509205/hgm_outer.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251115-140100-509205/initial" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251115-165631-974409/hgm_outer.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251115-165631-974409/initial" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251115-170730-307524/hgm_outer.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251115-170730-307524/initial" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251115-170922-362836/hgm_outer.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251115-170922-362836/initial" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251115-171033-684014/hgm_outer.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251115-171033-684014/initial" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251115-171117-477332/hgm_metadata.jsonl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251115-171117-477332/hgm_outer.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../output/20251115-171117-477332/initial" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../prevrun/CWE200_avoid-bind-to-all-interfaces/metadata.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../prevrun/CWE295_disabled-cert-validation/metadata.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../prevrun/CWE326_insufficient-dsa-key-size/metadata.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../prevrun/CWE352_flask-wtf-csrf-disabled/metadata.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../prevrun/CWE502_avoid-pickle/metadata.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../prevrun/CWE79_direct-use-of-jinja2/metadata1.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../prevrun/USER-EXEC-FORMAT-STRING/metadata.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../prevrun/pyshell/metadata.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../pyshell/ori_code.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../requirements.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../config.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/../config.yaml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../hgm_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/../hgm_utils.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../main.py" beforeDir="false" afterPath="$PROJECT_DIR$/../main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../obfuscation_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/../obfuscation_model.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../prevrun/CWE79_direct-use-of-jinja2/metadata.json" beforeDir="false" afterPath="$PROJECT_DIR$/../prevrun/CWE79_direct-use-of-jinja2/metadata.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../verify_prompt.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../verify_prompt.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

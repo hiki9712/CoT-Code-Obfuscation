@@ -23,6 +23,8 @@ from concurrent.futures import (ThreadPoolExecutor, as_completed, ProcessPoolExe
 from utils.evo_utils import load_hgm_metadata
 from tree import Node
 
+global config_path
+
 
 def update_metadata(output_dir, prevrun_dir, node):
     print(output_dir)
@@ -92,6 +94,7 @@ def initialize_run(
         output_dir,
         initial_code_path,
         prevrun_dir=None,
+        config_path=None,
         timeout=3600
 ):
     print(f"Previous run directory: {prevrun_dir}")
@@ -118,7 +121,9 @@ def initialize_run(
         verify_result, code = hgm_utils.eval_code(
             node_id="initial",
             init_code_path=initial_code_path,
+            config=config_path
         )
+        print(verify_result)
         score_match = re.search(r'评分:\s*(\d)/5', verify_result)
         if not score_match:
             raise ValueError("Can not find score.")
@@ -267,8 +272,14 @@ def main():
     parser.add_argument(
         "--config",
         type=str,
-        default="config.yaml",
+        default="./config.yaml",
         help="Path to YAML configuration file.",
+    )
+    parser.add_argument(
+        "--cwe_type",
+        type=str,
+        default=None,
+        help="Maximum number of evolution iterations.",
     )
     parser.add_argument(
         "--max_task_evals",
@@ -433,6 +444,8 @@ def main():
     eval_cfg = config.evaluation
     path_cfg = config.paths
 
+    config_path = args.config
+
     # variables for cco run
     run_id = datetime.datetime.now().strftime("%Y%m%d-%H%M%S-%f")
     output_dir = os.path.abspath(os.path.join("./output", run_id))
@@ -443,12 +456,13 @@ def main():
     print(f"Output directory exists: {os.path.exists(output_dir)}")
     # Initialize logger early
     logger = setup_logger(os.path.join(output_dir, "hgm_outer.log"))
-    cwe_type = "CWE79_direct-use-of-jinja2"
+    cwe_type = args.cwe_type if args.cwe_type is not None else "CWE79_direct-use-of-jinja2"
     prevrun_dir = f"./prevrun/{cwe_type}"
     submitted_ids = initialize_run(
         output_dir=output_dir,
         initial_code_path=f"./{cwe_type}/ori_code.py",
-        prevrun_dir=prevrun_dir
+        prevrun_dir=prevrun_dir,
+        config_path=config_path
     )
 
     node_info = get_node_by_node_id("initial")
@@ -462,8 +476,10 @@ def main():
     )
 
     def TS_sample(evals, nodes):
+        print(evals)
         alphas = [1 + np.sum(de)/5 for de in evals]
         betas = [1 + len(de) - np.sum(de)/5 for de in evals]
+        print(alphas, betas)
         if opt_cfg.cool_down:
             alphas = np.array(alphas) * (
                 10000
@@ -492,27 +508,28 @@ def main():
             nodes = [
                 node
                 for node in hgm_utils.nodes.values()
-                if np.isfinite(node.score) and node.score > 0
+                if np.isfinite(node.score) and node.score >= 0
             ]
             descendant_evals = [
                 node.get_descendant_evals()
                 for node in nodes
             ]
-            #print(descendant_evals)
             selected_node = nodes[TS_sample(descendant_evals, nodes)]
-            print(selected_node)
         child_node_strategy = hgm_utils.sample_child(
             selected_node,
             output_dir,
+            config=config_path
         )
         print(child_node_strategy)
+        score = 0
         if child_node_strategy != "failed":
-            ob = ObfuscationModel("./config1.yaml")
+            #ob = ObfuscationModel("./config.yaml")
+            ob = ObfuscationModel(config_path)
             ob_result = ob.obfuscation_result_generate(selected_node.code, child_node_strategy)
             print(ob_result)
             #去除<think></think>标签内容
-            ob_result = re.sub(r".*?</think>", "", ob_result)
-            json_match = re.search(r'\{.*\}', ob_result, re.DOTALL)
+            ob_result = re.sub(r".*?</think>", "", ob_result, flags=re.DOTALL)
+            json_match = re.search(r'\{.*\}', ob_result, flags=re.DOTALL)
             json_str = json_match.group()
             json_str = hgm_utils.fix_invalid_json_escapes(json_str)
             print("_______________________")
@@ -520,7 +537,7 @@ def main():
             print("_______________________")
             code = json.loads(json_str)["code"]
             #检测
-            verify_result = hgm_utils.eval_code(node_id=run_id, code=code)
+            verify_result = hgm_utils.eval_code(node_id=run_id, code=code, config=config_path)
             print(verify_result)
             score_match = re.search(r'评分:\s*(\d)/5', verify_result)
             if not score_match:
@@ -534,34 +551,40 @@ def main():
                     new_node
                 )
                 update_metadata(output_dir, prevrun_dir, new_node)
+        if score == 5:
+            return True
+        return False
 
-    try:
-        with ThreadPoolExecutor(max_workers=exec_cfg.max_workers) as executor:
-            futures = [
-                executor.submit(expand)
-                for _ in range(
-                    # len(hgm_utils.nodes) - 1,
-                    # #min(5, int(exec_cfg.max_workers**opt_cfg.alpha)),
-                    # min(10, 10),
-                    1
-                )
-            ]
-            for future in as_completed(futures):
-                future.result()
-
-        # with ThreadPoolExecutor(max_workers=exec_cfg.max_workers) as executor:
-        #     futures = [
-        #         executor.submit(sample)
-        #         #for _ in range(int(exec_cfg.max_task_evals * 100))
-        #         for _ in range(1)
-        #     ]
-        #     for future in as_completed(futures):
-        #         future.result()
-
-    except Exception as e:
-        logger.error(f"Error: {e}")
-        logger.error(traceback.format_exc())
-        print(repr(e))
+    flag = False
+    while not flag:
+        flag = expand()
+    # try:
+    #     with ThreadPoolExecutor(max_workers=exec_cfg.max_workers) as executor:
+    #         futures = [
+    #             executor.submit(expand)
+    #             for _ in range(
+    #                 # len(hgm_utils.nodes) - 1,
+    #                 # #min(5, int(exec_cfg.max_workers**opt_cfg.alpha)),
+    #                 # min(10, 10),
+    #                 1
+    #             )
+    #         ]
+    #         for future in as_completed(futures):
+    #             future.result()
+    #
+    #     # with ThreadPoolExecutor(max_workers=exec_cfg.max_workers) as executor:
+    #     #     futures = [
+    #     #         executor.submit(sample)
+    #     #         #for _ in range(int(exec_cfg.max_task_evals * 100))
+    #     #         for _ in range(1)
+    #     #     ]
+    #     #     for future in as_completed(futures):
+    #     #         future.result()
+    #
+    # except Exception as e:
+    #     logger.error(f"Error: {e}")
+    #     logger.error(traceback.format_exc())
+    #     print(repr(e))
 
 if __name__ == "__main__":
     main()

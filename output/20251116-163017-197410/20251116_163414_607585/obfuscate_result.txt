@@ -1,0 +1,41 @@
+from flask import request
+import jinja2
+
+class StringProxy:
+    def __init__(self, data):
+        self._data = str(data)
+        self._cache = {}
+
+    def __getattr__(self, name):
+        if name == 'a1':
+            v = self._data[::2][::-1]
+        elif name == 'a2':
+            v = self._data[1::2][::-1]
+        elif name == 'm1':
+            v = hex(hash(self._data[:len(self._data)//2]))[3:7]
+        else:
+            raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
+        self._cache[name] = v
+        return lambda: v
+
+def recursive_split(s, depth):
+    if depth == 0:
+        return s
+    return [recursive_split(s[:len(s)//2], depth-1), recursive_split(s[len(s)//2:], depth-1)]
+
+@app.route("/profile/", methods=['GET'])
+def profile():
+    u = request.args.get('username')
+    sp = StringProxy(u)
+    
+    part_a = sp.a1()[:hash(sp.m1())%3+1]
+    part_b = sp.a2()[-((hash(sp.m1())>>4)%3+1):]
+    
+    if (hash(u) % 7919) != 0:
+        tmp = recursive_split(u, 3)
+        part_a = tmp[0][0][0] if isinstance(tmp[0], list) else tmp[0]
+    
+    final = (part_a + part_b).encode('utf-16-le').decode('utf-16-le')
+    
+    with open("profile.html") as f:
+        return jinja2.Template(f.read()).render(x=final)

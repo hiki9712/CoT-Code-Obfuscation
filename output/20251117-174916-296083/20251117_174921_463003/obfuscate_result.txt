@@ -1,0 +1,19 @@
+from flask import request
+import jinja2
+
+@app.route("/profile/", methods=['GET'])
+def profile():
+    def complex_calculation(input_str):
+        return ''.join([chr((ord(char) * 2 + 5) % 256) for char in input_str])
+
+    def reverse_string(s):
+        return s[::-1]
+
+    username = request.args.get('username')
+    obfuscated_username = complex_calculation(username)
+    with open("profile.html") as f:
+        template_content = f.read()
+        if sum(ord(c) for c in obfuscated_username) % 3 == 0:
+            return jinja2.Template(template_content).render(username=reverse_string(obfuscated_username))
+        else:
+            return jinja2.Template(template_content).render(username=obfuscated_username)

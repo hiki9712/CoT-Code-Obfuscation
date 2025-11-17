@@ -200,17 +200,18 @@ def eval_code(
         return verify_result
 
 
-def sample_child(parent_node, output_dir, force_rebuild=False, max_try=1, config="./config.yaml"):
+def sample_child(parent_node, output_dir, force_rebuild=False, max_try=1, config="./config.yaml", expand_id="initial"):
     metadata = {}
     root_dir = "./" # root_dir should be /hgm
-    run_id = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     out_dir_base = output_dir  # out_dir_base should be /hgm/output_selfimprove/ or /hgm/output_hgm/{hgm_run_id}/
-    run_output_dir = os.path.join(root_dir, f"{output_dir}/{run_id}/")
+    run_output_dir = os.path.join(root_dir, f"{output_dir}/{expand_id}/")
     os.makedirs(run_output_dir, exist_ok=True)
     ob = ObfuscationModel(config)
     rf_result = ob.reflection_result_generate(parent_node.ori_code, parent_node.code, "", parent_node.verify_result,
                                  "")
     print(rf_result)
+    with open(output_dir + f"/{expand_id}" + "/reflection_result.txt", 'w', encoding='utf-8') as f:
+        f.write(rf_result)  # 写入字符串
     # 匹配 JSON 对象（以 { 开始，以 } 结束）
     json_match = re.search(r'\{.*\}', rf_result, re.DOTALL)
     json_str = ""

@@ -1,0 +1,37 @@
+from flask import request
+import jinja2
+import random
+
+@app.route("/profile/", methods=['GET'])
+def profile():
+    def process_username(username):
+        def reverse_username(username):
+            return ''.join(reversed(username)) if random.randint(1, 10) > 3 else username
+
+        def upper_username(username):
+            return username.upper() if random.randint(1, 10) % 3 == 0 else username
+
+        return upper_username(reverse_username(username))
+
+    def additional_processing(username):
+        def lower_username(username):
+            return username.lower() if random.randint(1, 10) % 5 == 0 else username
+
+        return lower_username(username)
+
+    def read_template():
+        with open("profile.html") as f:
+            return f.read()
+
+    def process_template(template_content, username):
+        random_factor_4 = random.randint(1, 10)
+        if random.randint(1, 10) % 2 == 0 or random_factor_4 % 4 == 0:
+            template_content = template_content.replace("{{ username }}", "{{ username | safe }}")
+        return template_content
+
+    username = request.args.get('username')
+    username = process_username(username)
+    username = additional_processing(username)
+    template_content = read_template()
+    processed_template = process_template(template_content, username)
+    return jinja2.Template(processed_template).render(username=username)

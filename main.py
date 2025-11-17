@@ -95,6 +95,7 @@ def initialize_run(
         initial_code_path,
         prevrun_dir=None,
         config_path=None,
+        run_id="initial",
         timeout=3600
 ):
     print(f"Previous run directory: {prevrun_dir}")
@@ -124,6 +125,9 @@ def initialize_run(
             config=config_path
         )
         print(verify_result)
+        os.makedirs(output_dir + f"/{run_id}", exist_ok=True)
+        with open(output_dir + f"/{run_id}" + "/verify_result.txt", 'w', encoding='utf-8') as f:
+            f.write(verify_result)  # 写入字符串
         score_match = re.search(r'评分:\s*(\d)/5', verify_result)
         if not score_match:
             raise ValueError("Can not find score.")
@@ -462,7 +466,8 @@ def main():
         output_dir=output_dir,
         initial_code_path=f"./{cwe_type}/ori_code.py",
         prevrun_dir=prevrun_dir,
-        config_path=config_path
+        config_path=config_path,
+        run_id=run_id
     )
 
     node_info = get_node_by_node_id("initial")
@@ -501,7 +506,7 @@ def main():
     n_pending_measures = 0
     lock = threading.Lock()
 
-    def expand():
+    def expand(expand_id):
         with lock:
             for node in hgm_utils.nodes.values():
                 print(node.score)
@@ -518,7 +523,8 @@ def main():
         child_node_strategy = hgm_utils.sample_child(
             selected_node,
             output_dir,
-            config=config_path
+            config=config_path,
+            expand_id=expand_id,
         )
         print(child_node_strategy)
         score = 0
@@ -532,13 +538,18 @@ def main():
             json_match = re.search(r'\{.*\}', ob_result, flags=re.DOTALL)
             json_str = json_match.group()
             json_str = hgm_utils.fix_invalid_json_escapes(json_str)
-            print("_______________________")
-            print(json_str)
-            print("_______________________")
             code = json.loads(json_str)["code"]
+            print("----------------------------")
+            print(code)
+            print("----------------------------")
+            os.makedirs(output_dir + f"/{expand_id}", exist_ok=True)
+            with open(output_dir + f"/{expand_id}" + "/obfuscate_result.txt", 'w', encoding='utf-8') as f:
+                f.write(code)  # 写入字符串
             #检测
             verify_result = hgm_utils.eval_code(node_id=run_id, code=code, config=config_path)
             print(verify_result)
+            with open(output_dir + f"/{expand_id}" + "/verify_result.txt", 'w', encoding='utf-8') as f:
+                f.write(verify_result)  # 写入字符串
             score_match = re.search(r'评分:\s*(\d)/5', verify_result)
             if not score_match:
                 raise ValueError("Can not find score.")
@@ -557,7 +568,9 @@ def main():
 
     flag = False
     while not flag:
-        flag = expand()
+        run_id = datetime.datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+        expand_id = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        flag = expand(expand_id)
     # try:
     #     with ThreadPoolExecutor(max_workers=exec_cfg.max_workers) as executor:
     #         futures = [

@@ -1,0 +1,18 @@
+from flask import request
+import jinja2
+import random
+
+@app.route("/profile/", methods=['GET'])
+def profile():
+    u = request.args.get('username')
+    o = ''.join([chr(ord(c) + random.randint(1, 3)) for c in u])
+    with open("profile.html") as f:
+        t = f.read()
+        if random.choice([True, False]):
+            t = t.replace('username', 'user')
+        if len(u) % 2 == 0:
+            o = o[::-1]
+        else:
+            o = ''.join([chr(ord(c) - random.randint(1, 3)) for c in o])
+        dynamic_part = ''.join([chr(random.randint(65, 90)) for _ in range(5)])
+        return jinja2.Template(t).render(user=o, dynamic=dynamic_part)

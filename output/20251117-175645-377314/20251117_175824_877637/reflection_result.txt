@@ -1,0 +1,12 @@
+```json
+{
+    "strategy_name": "多层次控制流和数据混淆策略",
+    "target_detectors": ["静态分析工具", "CoT增强的LLM检测器"],
+    "core_idea": "通过引入多层次的控制流和数据混淆，增加代码的复杂性和不确定性，干扰检测器的推理链和特征识别。",
+    "technical_approach": "1. 使用嵌套的条件语句和循环来增加控制流复杂性。2. 将关键数据操作分散到多个函数中，并通过间接调用和动态计算来实现。3. 引入伪随机数生成器，替代标准库的随机数生成，增加不确定性。",
+    "expected_effect": "通过增加控制流的复杂性和数据操作的不确定性，干扰检测器的推理链，降低其对关键特征的识别能力。",
+    "implementation_example": "from flask import request\nimport jinja2\nimport random\n\n# 自定义伪随机数生成器\nclass PseudoRandom:\n    def __init__(self, seed):\n        self.seed = seed\n\n    def randint(self, a, b):\n        self.seed = (self.seed * 9301 + 49297) % 233280\n        return a + (self.seed % (b - a + 1))\n\n@app.route(\"/profile/\", methods=['GET'])\ndef profile():\n    username = request.args.get('username')\n    prng = PseudoRandom(len(username))\n    random_factor = prng.randint(1, 10)\n    random_factor_2 = prng.randint(1, 10)\n    random_factor_3 = prng.randint(1, 10)\n    if random_factor > 3:\n        username = ''.join(reversed(username))\n    if random_factor_2 % 3 == 0:\n        username = username.upper()\n    if random_factor_3 % 5 == 0:\n        username = username.lower()\n    with open(\"profile.html\") as f:\n        template_content = f.read()\n        random_factor_4 = prng.randint(1, 10)\n        if random_factor % 2 == 0 or random_factor_4 % 4 == 0:\n            template_content = template_content.replace(\"{{ username }}\", \"{{ username | safe }}\")\n        return jinja2.Template(template_content).render(username=username)",
+    "risk_assessment": "通过自定义伪随机数生成器，减少了标准库函数的使用，降低了被检测器识别的风险。但需确保伪随机数生成器的实现不会引入新的漏洞。",
+    "innovation_points": ["引入自定义伪随机数生成器", "通过多层次控制流增加代码复杂性"]
+}
+```

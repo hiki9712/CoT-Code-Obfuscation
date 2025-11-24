@@ -64,28 +64,28 @@ class HGMConfig:
     def from_yaml(cls, yaml_path: str) -> 'HGMConfig':
         """
         Load configuration from a YAML file.
-        
+
         Args:
             yaml_path: Path to the YAML configuration file
-            
+
         Returns:
             HGMConfig instance with loaded configuration
         """
         if not os.path.exists(yaml_path):
             print(f"Warning: Configuration file {yaml_path} not found. Using defaults.")
             return cls()
-        
+
         try:
             with open(yaml_path, 'r') as f:
                 config_data = yaml.safe_load(f) or {}
-            
+
             # Create instances with loaded data
             llm_config = LLMConfig(**config_data.get('llm', {}))
             optimization_config = OptimizationConfig(**config_data.get('optimization', {}))
             execution_config = ExecutionConfig(**config_data.get('execution', {}))
             evaluation_config = EvaluationConfig(**config_data.get('evaluation', {}))
             paths_config = PathConfig(**config_data.get('paths', {}))
-            
+
             return cls(
                 llm=llm_config,
                 optimization=optimization_config,
@@ -97,55 +97,55 @@ class HGMConfig:
             print(f"Error loading configuration from {yaml_path}: {e}")
             print("Using default configuration.")
             return cls()
-    
+
     @classmethod
     def from_yaml_with_overrides(cls, yaml_path: str, **overrides) -> 'HGMConfig':
         """
         Load configuration from YAML and apply command-line overrides.
-        
+
         Args:
             yaml_path: Path to the YAML configuration file
             **overrides: Key-value pairs to override configuration values
-            
+
         Returns:
             HGMConfig instance with loaded and overridden configuration
         """
         config = cls.from_yaml(yaml_path)
-        
+
         # Apply overrides using dot notation (e.g., "llm.self_improve_llm")
         for key, value in overrides.items():
             if value is not None:  # Only override if value is provided
                 config._set_nested_attr(key, value)
-        
+
         return config
-    
+
     def _set_nested_attr(self, attr_path: str, value: Any):
         """
         Set a nested attribute using dot notation.
-        
+
         Args:
             attr_path: Dot-separated attribute path (e.g., "llm.self_improve_llm")
             value: Value to set
         """
         parts = attr_path.split('.')
         obj = self
-        
+
         # Navigate to the parent object
         for part in parts[:-1]:
             if hasattr(obj, part):
                 obj = getattr(obj, part)
             else:
                 return  # Invalid path, skip
-        
+
         # Set the final attribute
         final_attr = parts[-1]
         if hasattr(obj, final_attr):
             setattr(obj, final_attr, value)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """
         Convert configuration to dictionary format.
-        
+
         Returns:
             Dictionary representation of the configuration
         """
@@ -178,11 +178,11 @@ class HGMConfig:
                 'initial_agent_name': self.paths.initial_agent_name,
             }
         }
-    
+
     def save_to_yaml(self, yaml_path: str):
         """
         Save configuration to a YAML file.
-        
+
         Args:
             yaml_path: Path where to save the YAML configuration file
         """
@@ -193,11 +193,11 @@ class HGMConfig:
 def load_config(config_path: str = "config.yaml", **overrides) -> HGMConfig:
     """
     Convenience function to load configuration with overrides.
-    
+
     Args:
         config_path: Path to the configuration file
         **overrides: Command-line or programmatic overrides
-        
+
     Returns:
         HGMConfig instance
     """

@@ -1,7 +1,0 @@
-
-
-```json
-{
-    "code": "from flask import request\nimport jinja2\n\nclass DataProcessor:\n    def __init__(self, raw):\n        self.__raw = raw\n        self.__dict__.update({f'_v{i}': None for i in range(5)})\n\n    def _phase1(self):\n        self._v0 = (self.__raw[0][:3] + \"\\u200b\")[:-1]\n        self._v2 = (self.__raw[1][-2:] + \"\\u200c\").strip()\n        return self\n\n    def _phase2(self):\n        self._v3 = (self._v0.replace(\"\\u200b\", \"\") + self._v2.replace(\"\\u200c\", \"\"))[::-1]\n        self.__dict__['_v4'] = self._v3[::2] + self._v3[1::2]\n        return self\n\n    def _finalize(self):\n        return self._v4\n\n@app.route(\"/profile/\", methods=['GET'])\ndef profile():\n    u1 = request.headers.get('X-Header') or request.args.get('u1', '')\n    u2 = request.cookies.get('cookie_key') or request.args.get('u2', '')\n\n    @jinja2.contextfunction\n    def _render(ctx):\n        return ctx[\"__hidden_ctx\"].get('user')\n\n    _tmp = [u1.strip(), u2[::-1]]\n    try:\n        if hash(u1) % 1000 == 999:\n            raise ValueError(_tmp[::2])\n    except (TypeError, IndexError):\n        pass\n\n    processed = DataProcessor(_tmp)._phase1()._phase2()._finalize()\n    ctx = {'__hidden_ctx': {'user': processed}, '_hook': _render}\n\n    with open('profile.html') as f:\n        return str(jinja2.Template(f.read()).render(**ctx))[:2**20]"
-}
-```

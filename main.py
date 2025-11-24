@@ -1,26 +1,16 @@
 import re
 import shutil
-import json
 import argparse
-import traceback
-import random
-import time
 import json
 import os
 import numpy as np
 import datetime
 import threading
+from config import load_config
 from collections import defaultdict
 
-import hgm_utils
-from obfuscation_model import ObfuscationModel
-from reward_model import RewardModel
-from verify_model import VerifyModel
-from utils.docker_utils import copy_src_files, setup_logger
-from config import load_config
-from utils.common_utils import load_json_file
-from concurrent.futures import (ThreadPoolExecutor, as_completed, ProcessPoolExecutor, TimeoutError)
-from utils.evo_utils import load_hgm_metadata
+from utils import obfuscate_utils
+from prompts.obfuscation_model import ObfuscationModel
 from tree import Node
 
 global config_path
@@ -28,18 +18,18 @@ global config_path
 
 def update_metadata(output_dir, prevrun_dir, node):
     print(output_dir)
-    with open(os.path.join(output_dir, "hgm_metadata.jsonl"), "a") as f:
-        f.write(
-            json.dumps(
-                {
-                    "nodes": [
-                        node.save_as_dict()
-                    ],
-                },
-                indent=2,
-            )
-            + "\n"
-        )
+    # with open(os.path.join(output_dir, "hgm_metadata.jsonl"), "a") as f:
+    #     f.write(
+    #         json.dumps(
+    #             {
+    #                 "nodes": [
+    #                     node.save_as_dict()
+    #                 ],
+    #             },
+    #             indent=2,
+    #         )
+    #         + "\n"
+    #     )
     metadata_file = os.path.join(prevrun_dir, "metadata.json")
     # 读取现有的 metadata.json 文件
     if os.path.exists(metadata_file):
@@ -60,9 +50,9 @@ def update_metadata(output_dir, prevrun_dir, node):
         node.node_id
     )
     with open(metadata_file, "w") as f:
-        json.dump(metadata, f, indent=2)
+        json.dump(metadata, f, indent=2, ensure_ascii=False,)
     # json.dump(
-    #     hgm_utils.init_evaluated_tasks,
+    #     obfuscate_utils.init_evaluated_tasks,
     #     open(os.path.join(output_dir, "init_evaluated_tasks.json"), "w"),
     # )
 
@@ -71,11 +61,11 @@ def get_node_by_node_id(node_id):
     """
     通过node_id查找节点信息
     """
-    if not hasattr(hgm_utils, 'nodes'):
+    if not hasattr(obfuscate_utils, 'nodes'):
         print("节点树未初始化")
         return None
 
-    for _, node in hgm_utils.nodes.items():
+    for _, node in obfuscate_utils.nodes.items():
         if node.node_id == node_id:
             return {
                 'node_id': node.node_id,
@@ -104,8 +94,8 @@ def initialize_run(
         os.makedirs(prevrun_dir)
 
     # 初始化节点计数器（如果不存在）
-    if not hasattr(hgm_utils, 'node_counter'):
-        hgm_utils.node_counter = 0
+    if not hasattr(obfuscate_utils, 'node_counter'):
+        obfuscate_utils.node_counter = 0
 
     # 检查是否存在之前的运行结果
     prevrun_metadata_path = os.path.join(prevrun_dir, "metadata.json") if prevrun_dir else None
@@ -119,7 +109,7 @@ def initialize_run(
         print("No previous run found, performing initial verification...")
 
         # 执行初始代码验证
-        verify_result, code = hgm_utils.eval_code(
+        verify_result, code = obfuscate_utils.eval_code(
             node_id="initial",
             init_code_path=initial_code_path,
             config=config_path
@@ -152,7 +142,7 @@ def initialize_run(
         # 保存metadata到输出目录
         metadata_path = os.path.join(prevrun_dir, "metadata.json")
         with open(metadata_path, 'w') as f:
-            json.dump(metadata, f, indent=2)
+            json.dump(metadata, f, indent=2, ensure_ascii=False,)
 
         print(f"Initial verification completed. Results saved to {metadata_path}")
 
@@ -164,7 +154,7 @@ def initialize_run(
             prev_metadata = json.load(f)
 
         # 恢复节点计数器
-        hgm_utils.node_counter = prev_metadata.get("node_counter", 0)
+        obfuscate_utils.node_counter = prev_metadata.get("node_counter", 0)
 
         # 重建节点树
         for nid, node_data in prev_metadata.get("nodes", {}).items():
@@ -203,8 +193,8 @@ def initialize_run(
             # 如果是目录，复制整个目录
             shutil.copytree(initial_code_path, initial_dest)
 
-    # 将节点树保存到hgm_utils中，以便其他函数访问
-    hgm_utils.nodes = nodes
+    # 将节点树保存到obfuscate_utils中，以便其他函数访问
+    obfuscate_utils.nodes = nodes
 
     print(f"Initialization completed. Total nodes: {len(nodes)}")
     # node_info = get_node_by_node_id("initial")
@@ -218,14 +208,14 @@ def update_node_tree(output_dir, new_node, parent_node=None, submitted_ids=None)
     """
     更新节点树并保存到metadata.json
     """
-    # 确保hgm_utils.nodes存在
-    if not hasattr(hgm_utils, 'nodes'):
-        hgm_utils.nodes = {}
+    # 确保obfuscate_utils.nodes存在
+    if not hasattr(obfuscate_utils, 'nodes'):
+        obfuscate_utils.nodes = {}
 
     # 分配节点ID
     if not hasattr(new_node, 'id') or not new_node.id:
-        hgm_utils.node_counter += 1
-        new_node.id = f"node_{hgm_utils.node_counter}"
+        obfuscate_utils.node_counter += 1
+        new_node.id = f"node_{obfuscate_utils.node_counter}"
 
     # 设置父子关系
     if parent_node:
@@ -240,7 +230,7 @@ def update_node_tree(output_dir, new_node, parent_node=None, submitted_ids=None)
         new_node.child_ids = []
 
     # 添加新节点到节点树
-    hgm_utils.nodes[new_node.id] = new_node
+    obfuscate_utils.nodes[new_node.id] = new_node
 
     # 构建完整的metadata
     metadata = {
@@ -253,11 +243,11 @@ def update_node_tree(output_dir, new_node, parent_node=None, submitted_ids=None)
                 "utility_measures": node.utility_measures,
                 "verify_result": getattr(node, 'verify_result', {})
             }
-            for node_id, node in hgm_utils.nodes.items()
+            for node_id, node in obfuscate_utils.nodes.items()
         },
         "submitted_ids": {node_id: list(task_set) for node_id, task_set in
                           submitted_ids.items()} if submitted_ids else {},
-        "node_counter": hgm_utils.node_counter,
+        "node_counter": obfuscate_utils.node_counter,
         "timestamp": datetime.datetime.now().isoformat()
     }
 
@@ -458,13 +448,11 @@ def main():
     #print(f"Using config file: {args.config}")
     print(f"Output directory: {output_dir}")
     print(f"Output directory exists: {os.path.exists(output_dir)}")
-    # Initialize logger early
-    logger = setup_logger(os.path.join(output_dir, "hgm_outer.log"))
     cwe_type = args.cwe_type if args.cwe_type is not None else "CWE79_direct-use-of-jinja2"
     prevrun_dir = f"./prevrun/{cwe_type}"
     submitted_ids = initialize_run(
         output_dir=output_dir,
-        initial_code_path=f"./{cwe_type}/ori_code.py",
+        initial_code_path=f"./vulncode/{cwe_type}/ori_code.py",
         prevrun_dir=prevrun_dir,
         config_path=config_path,
         run_id=run_id
@@ -474,11 +462,7 @@ def main():
 
     # if node_info:
     #     print(json.dumps(node_info, indent=2))
-    total_num_tasks = len(hgm_utils.total_tasks)
-    # Set up logger
-    logger.info(
-        f"Starting HGM run {run_id} with configuration: {config.to_dict()}"
-    )
+    total_num_tasks = len(obfuscate_utils.total_tasks)
 
     def TS_sample(evals, nodes):
         print(evals)
@@ -488,15 +472,15 @@ def main():
         if opt_cfg.cool_down:
             alphas = np.array(alphas) * (
                 10000
-                if exec_cfg.max_task_evals == hgm_utils.n_task_evals
-                else exec_cfg.max_task_evals**opt_cfg.beta
-                / (exec_cfg.max_task_evals - hgm_utils.n_task_evals) ** opt_cfg.beta
+                if exec_cfg.max_task_evals == obfuscate_utils.n_task_evals
+                else exec_cfg.max_task_evals ** opt_cfg.beta
+                     / (exec_cfg.max_task_evals - obfuscate_utils.n_task_evals) ** opt_cfg.beta
             )
             betas = np.array(betas) * (
                 10000
-                if exec_cfg.max_task_evals == hgm_utils.n_task_evals
-                else exec_cfg.max_task_evals**opt_cfg.beta
-                / (exec_cfg.max_task_evals - hgm_utils.n_task_evals) ** opt_cfg.beta
+                if exec_cfg.max_task_evals == obfuscate_utils.n_task_evals
+                else exec_cfg.max_task_evals ** opt_cfg.beta
+                     / (exec_cfg.max_task_evals - obfuscate_utils.n_task_evals) ** opt_cfg.beta
             )
         thetas = np.random.beta(alphas, betas)
         print(thetas, np.argmax(thetas))
@@ -508,11 +492,11 @@ def main():
 
     def expand(expand_id):
         with lock:
-            for node in hgm_utils.nodes.values():
+            for node in obfuscate_utils.nodes.values():
                 print(node.score)
             nodes = [
                 node
-                for node in hgm_utils.nodes.values()
+                for node in obfuscate_utils.nodes.values()
                 if np.isfinite(node.score) and node.score >= 0
             ]
             descendant_evals = [
@@ -520,7 +504,7 @@ def main():
                 for node in nodes
             ]
             selected_node = nodes[TS_sample(descendant_evals, nodes)]
-        child_node_strategy = hgm_utils.sample_child(
+        child_node_strategy = obfuscate_utils.sample_child(
             selected_node,
             output_dir,
             config=config_path,
@@ -537,7 +521,7 @@ def main():
             ob_result = re.sub(r".*?</think>", "", ob_result, flags=re.DOTALL)
             json_match = re.search(r'\{.*\}', ob_result, flags=re.DOTALL)
             json_str = json_match.group()
-            json_str = hgm_utils.fix_invalid_json_escapes(json_str)
+            json_str = obfuscate_utils.fix_invalid_json_escapes(json_str)
             code = json.loads(json_str)["code"]
             print("----------------------------")
             print(code)
@@ -546,7 +530,7 @@ def main():
             with open(output_dir + f"/{expand_id}" + "/obfuscate_result.txt", 'w', encoding='utf-8') as f:
                 f.write(code)  # 写入字符串
             #检测
-            verify_result = hgm_utils.eval_code(node_id=run_id, code=code, config=config_path)
+            verify_result = obfuscate_utils.eval_code(node_id=run_id, code=code, config=config_path)
             print(verify_result)
             with open(output_dir + f"/{expand_id}" + "/verify_result.txt", 'w', encoding='utf-8') as f:
                 f.write(verify_result)  # 写入字符串
@@ -562,21 +546,19 @@ def main():
                     new_node
                 )
                 update_metadata(output_dir, prevrun_dir, new_node)
-        if score == 5:
-            return True
-        return False
+        return score
 
-    flag = False
-    while not flag:
+    score = "0"
+    while score != "5":
         run_id = datetime.datetime.now().strftime("%Y%m%d-%H%M%S-%f")
         expand_id = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-        flag = expand(expand_id)
+        score = expand(expand_id)
     # try:
     #     with ThreadPoolExecutor(max_workers=exec_cfg.max_workers) as executor:
     #         futures = [
     #             executor.submit(expand)
     #             for _ in range(
-    #                 # len(hgm_utils.nodes) - 1,
+    #                 # len(obfuscate_utils.nodes) - 1,
     #                 # #min(5, int(exec_cfg.max_workers**opt_cfg.alpha)),
     #                 # min(10, 10),
     #                 1

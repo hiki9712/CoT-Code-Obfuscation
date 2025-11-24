@@ -1,15 +1,10 @@
-import os
-import pickle
-from statistics import stdev
-
 import numpy as np
 
-import hgm_utils
-
+from utils import obfuscate_utils
 
 
 def get_num_total_evals():
-    return hgm_utils.nodes[0].get_sum(lambda node: node.num_evals)
+    return obfuscate_utils.nodes[0].get_sum(lambda node: node.num_evals)
 
 
 class Node:
@@ -35,7 +30,7 @@ class Node:
         self.code = code
         self.strategy = strategy
         self.ori_code = ori_code
-        hgm_utils.nodes[self.node_id] = self
+        obfuscate_utils.nodes[self.node_id] = self
 
     def get_sub_tree(self, fn=lambda self: self):
         if len(self.child_ids) == 0:

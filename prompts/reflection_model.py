@@ -17,9 +17,17 @@ class ReflectionModel:
         self.messages = []
         self.reflection_prompt = ""
         self.reflection_result = ""
+        self.init_system_prompt()
 
     def add_message(self, message):
         self.messages.append(message)
+
+    def init_system_prompt(self):
+        system_prompt_content = load_file(self.config['system'])
+        self.messages.append({
+            "role": "system",
+            "content": system_prompt_content
+        })
 
     def save_to_file(self, file_path):
         with open(file_path, 'w', encoding='utf-8') as f:
@@ -51,6 +59,34 @@ class ReflectionModel:
             temperature=self.temperature
         )
         self.reflection_result = chat_completion.choices[0].message.content
+        self.messages.append(
+            {'role': chat_completion.choices[0].message.role, 'content': chat_completion.choices[0].message.content})
+        return chat_completion.choices[0].message.content
+
+    def strategy_result_generate(self, origin_code, current_code, applied_obfuscation_steps,
+                                  detector_feedback, failed_strategies):
+        strategy_client = OpenAI(
+            base_url=self.config['base_url'],
+            api_key=self.config['api_key']
+        )
+        strategy_prompt = load_file(self.config['strategy']).format(
+            #origin_code=origin_code,
+            current_code=current_code,
+            applied_obfuscation_steps=applied_obfuscation_steps,
+            detector_feedback=detector_feedback,
+            failed_strategies=failed_strategies,
+        )
+        print(strategy_prompt)
+        print("__________________________________________________________________")
+        self.messages.append({
+                    "role":"user",
+                    "content":strategy_prompt
+        })
+        chat_completion = strategy_client.chat.completions.create(
+            messages=self.messages,
+            model=self.config['model'],
+            temperature=self.temperature
+        )
         self.messages.append(
             {'role': chat_completion.choices[0].message.role, 'content': chat_completion.choices[0].message.content})
         return chat_completion.choices[0].message.content

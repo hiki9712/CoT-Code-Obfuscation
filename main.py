@@ -442,6 +442,7 @@ def main():
 
     # variables for cco run
     run_id = datetime.datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+    init_id = run_id
     output_dir = os.path.abspath(os.path.join("./output", run_id))
     os.makedirs(output_dir, exist_ok=True)
     print(f"Working directory: {os.getcwd()}")
@@ -459,10 +460,6 @@ def main():
     )
 
     node_info = get_node_by_node_id("initial")
-
-    # if node_info:
-    #     print(json.dumps(node_info, indent=2))
-    total_num_tasks = len(obfuscate_utils.total_tasks)
 
     def TS_sample(evals, nodes):
         print(evals)
@@ -507,6 +504,7 @@ def main():
         child_node_strategy = obfuscate_utils.sample_child(
             selected_node,
             output_dir,
+            init_id,
             config=config_path,
             expand_id=expand_id,
         )
@@ -548,38 +546,11 @@ def main():
                 update_metadata(output_dir, prevrun_dir, new_node)
         return score
 
-    score = "0"
-    while score != "5":
+    score = 0
+    while score != 5:
         run_id = datetime.datetime.now().strftime("%Y%m%d-%H%M%S-%f")
         expand_id = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
         score = expand(expand_id)
-    # try:
-    #     with ThreadPoolExecutor(max_workers=exec_cfg.max_workers) as executor:
-    #         futures = [
-    #             executor.submit(expand)
-    #             for _ in range(
-    #                 # len(obfuscate_utils.nodes) - 1,
-    #                 # #min(5, int(exec_cfg.max_workers**opt_cfg.alpha)),
-    #                 # min(10, 10),
-    #                 1
-    #             )
-    #         ]
-    #         for future in as_completed(futures):
-    #             future.result()
-    #
-    #     # with ThreadPoolExecutor(max_workers=exec_cfg.max_workers) as executor:
-    #     #     futures = [
-    #     #         executor.submit(sample)
-    #     #         #for _ in range(int(exec_cfg.max_task_evals * 100))
-    #     #         for _ in range(1)
-    #     #     ]
-    #     #     for future in as_completed(futures):
-    #     #         future.result()
-    #
-    # except Exception as e:
-    #     logger.error(f"Error: {e}")
-    #     logger.error(traceback.format_exc())
-    #     print(repr(e))
 
 if __name__ == "__main__":
     main()

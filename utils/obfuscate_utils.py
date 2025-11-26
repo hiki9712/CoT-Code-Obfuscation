@@ -15,10 +15,6 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from statistics import stdev
 
-#from polyglot.harness import harness as polyglot_harness
-from prompts.testrepo_prompt import get_test_description
-#from swe_bench.harness import harness as swe_harness
-#from swe_bench.report import make_report
 from utils.common_utils import load_json_file
 from utils.evo_utils import (get_all_performance, get_model_patch_paths,
                              is_compiled_self_improve)
@@ -191,7 +187,7 @@ def eval_code(
         return verify_result
 
 
-def sample_child(parent_node, output_dir, force_rebuild=False, max_try=1, config="./config.yaml", expand_id="initial"):
+def sample_child(parent_node, output_dir, run_id, force_rebuild=False, max_try=1, config="./config.yaml", expand_id="initial"):
     metadata = {}
     root_dir = "../"  # root_dir should be /hgm
     out_dir_base = output_dir  # out_dir_base should be /hgm/output_selfimprove/ or /hgm/output_hgm/{hgm_run_id}/
@@ -211,16 +207,16 @@ def sample_child(parent_node, output_dir, force_rebuild=False, max_try=1, config
         json_str = fix_invalid_json_escapes(json_str)
         success = json.loads(json_str)["success"]
         fail = json.loads(json_str)["fail"]
-        with open("./output/failed.txt", "a+", encoding="utf-8") as file:
+        with open(f"./output/{run_id}/failed.txt", "a+", encoding="utf-8") as file:
             for strategy in fail:
                 file.write(strategy["strategy_name"]+":"+strategy["reason"]+"\n")
-        with open("./output/success.txt", "a+", encoding="utf-8") as file:
+        with open(f"./output/{run_id}/success.txt", "a+", encoding="utf-8") as file:
             for strategy in success:
                 file.write(strategy["strategy_name"] + ":" + strategy["reason"] + "\n")
 
-    with open("./output/failed.txt", "r", encoding="utf-8") as file:
+    with open(f"./output/{run_id}/failed.txt", "a+", encoding="utf-8") as file:
         failed_strategies = file.read()
-    strategy_result = ob.strategy_result_generate(parent_node.ori_code, parent_node.code, parent_node.strategy, parent_node.verify_result, failed_strategies)
+    strategy_result = rf.strategy_result_generate(parent_node.ori_code, parent_node.code, parent_node.strategy, parent_node.verify_result, failed_strategies)
     with open(output_dir + f"/{expand_id}" + "/strategy_result.txt", 'w', encoding='utf-8') as f:
         f.write(strategy_result)  # 写入字符串
     # 匹配 JSON 对象（以 { 开始，以 } 结束）

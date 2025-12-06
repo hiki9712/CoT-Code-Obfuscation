@@ -1,0 +1,9 @@
+
+<!DOCTYPE html>
+<html>
+<head><title>用户 profile</title></head>
+<body>
+    <h1>欢迎，{{ username|trim or '匿名用户' }}！</h1>
+    <p>当前访问时间：{{ now.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+</body>
+</html>

@@ -8,7 +8,7 @@ import random
 import re
 import threading
 import traceback
-from prompts.verify_model import VerifyModel
+from prompts.verify_model import HierarchicalValidator
 from prompts.obfuscation_model import ObfuscationModel
 from prompts.reflection_model import ReflectionModel
 from concurrent.futures import ThreadPoolExecutor
@@ -166,24 +166,30 @@ def choose_entry(parent_node, debug=False):
     return entry
 
 
+def get_metadata(prevrun_dir):
+    metadata_file = os.path.join(prevrun_dir, "metadata.json")
+    with open(metadata_file, "r") as f:
+        metadata = json.load(f)
+    return metadata
+
+
 def eval_code(
     node_id,
     init_code_path=None,
-    code=None,
+    obfuscated_code=None,
+    origin_code=None,
+    strategy=None,
     config="./config.yaml"
 ):
-    # if node_id == "failed":
-    #     return [0] * num_tasks
-    vr = VerifyModel(config)
-    #metadata = load_json_file(os.path.join(output_dir, node_id, "metadata.json"))
+    vr = HierarchicalValidator(config)
     if node_id == "initial":
         #直接评估
         with open(init_code_path, 'r', encoding='utf-8') as file:
             code = file.read()
-        verify_result = vr.obfuscate_result_verify(code)
+        verify_result = vr.verify(code, code, strategy)
         return verify_result, code
     else:
-        verify_result = vr.obfuscate_result_verify(code)
+        verify_result = vr.verify(origin_code, obfuscated_code, strategy)
         return verify_result
 
 
@@ -213,9 +219,10 @@ def sample_child(parent_node, output_dir, run_id, force_rebuild=False, max_try=1
         with open(f"./output/{run_id}/success.txt", "a+", encoding="utf-8") as file:
             for strategy in success:
                 file.write(strategy["strategy_name"] + ":" + strategy["reason"] + "\n")
-
-    with open(f"./output/{run_id}/failed.txt", "a+", encoding="utf-8") as file:
-        failed_strategies = file.read()
+    failed_strategies = None
+    if os.path.exists(f"./output/{run_id}/failed.txt"):
+        with open(f"./output/{run_id}/failed.txt", "r+", encoding="utf-8") as strategy_f:
+            failed_strategies = strategy_f.read()
     strategy_result = rf.strategy_result_generate(parent_node.ori_code, parent_node.code, parent_node.strategy, parent_node.verify_result, failed_strategies)
     with open(output_dir + f"/{expand_id}" + "/strategy_result.txt", 'w', encoding='utf-8') as f:
         f.write(strategy_result)  # 写入字符串

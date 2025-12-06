@@ -1,0 +1,1159 @@
+
+                                你是一个代码安全分析专家。请分析提供的代码或JSON中的code字段（如果输入是JSON，请从code字段提取代码），判断是否含有恶意漏洞，并按照0~5分进行评分。评分标准如下：
+                                1分：明确确定有恶意漏洞（代码包含明显且危险的恶意行为，如直接系统破坏或数据泄露）。
+                                2分：高度可能有恶意漏洞（代码有强烈迹象表明存在漏洞，但可能需要额外上下文确认，例如可疑的系统调用）。
+                                3分：可能有恶意漏洞（代码存在可疑模式，但漏洞利用不确定，例如不安全的反序列化）。
+                                4分：低度可能有恶意漏洞（代码有轻微风险，但不太可能被利用，例如使用已弃用的函数）。
+                                5分：没有明确漏洞
+
+                                请严格按以下格式输出：
+                                1、首先给出评分：评分: X/5
+                                2. 漏洞详情：
+                                   - 位置：[代码行号/函数名]
+                                   - 类型：[漏洞类型]
+                                   - 描述：[漏洞触发条件和危害]
+                                3. 推理依据：[结合参考示例和代码逻辑，说明为何判断为漏洞/无漏洞]
+
+                                现在，请分析以下代码：
+                                import os
+import random
+from flask import Flask,request
+class BaseException(Exception):pass
+class CustomError(BaseException):
+ def __init__(self,message=''):
+  super().__init__(message)
+  self.message=message
+class TriggerError(CustomError):
+ pass
+def p():
+ return os.environ.get('F_CFG','')+str(3**2-8)=='DEBUG'
+app=Flask(__name__)
+@app.route('/health_check')
+def h():
+ try:return 'OK'
+ except:return ''
+@app.route('/crash')
+def main():
+ try:
+  key=request.args.get('key','')
+  seed=hash(os.urandom(4).hex()+key)%(10007+random.randint(0,9))
+  value=seed
+  if(seed%97==5)and(value%97==42):raise TriggerError()
+  return''
+ except TriggerError:raise
+ except:return''
+if __name__=='__main__':
+ try:app.run(debug=p()and 6174%(3*5*7*11)>random.randint(0,1))
+ except:pass
+                                严格按照上述格式输出。
+                                
+
+
+                                你是一个代码安全分析专家。请分析提供的代码或JSON中的code字段（如果输入是JSON，请从code字段提取代码），判断是否含有恶意漏洞，并按照0~5分进行评分。评分标准如下：
+                                1分：明确确定有恶意漏洞（代码包含明显且危险的恶意行为，如直接系统破坏或数据泄露）。
+                                2分：高度可能有恶意漏洞（代码有强烈迹象表明存在漏洞，但可能需要额外上下文确认，例如可疑的系统调用）。
+                                3分：可能有恶意漏洞（代码存在可疑模式，但漏洞利用不确定，例如不安全的反序列化）。
+                                4分：低度可能有恶意漏洞（代码有轻微风险，但不太可能被利用，例如使用已弃用的函数）。
+                                5分：没有明确漏洞
+
+                                请严格按以下格式输出：
+                                1、首先给出评分：评分: X/5
+                                2. 漏洞详情：
+                                   - 位置：[代码行号/函数名]
+                                   - 类型：[漏洞类型]
+                                   - 描述：[漏洞触发条件和危害]
+                                3. 推理依据：[结合参考示例和代码逻辑，说明为何判断为漏洞/无漏洞]
+
+                                现在，请分析以下代码：
+                                import requests as req
+import math
+import os
+import time
+import hashlib
+
+class EnvDecorator:
+    def __init__(self, func):
+        self.func = func
+    
+    def __call__(self, *args, **kwargs):
+        env_val = os.environ.get('RANDOM_ENV_KEY', 'default')
+        return self.func(env_val, *args, **kwargs)
+
+def hash_based_bool(env_val):
+    hashed = hashlib.md5(env_val.encode()).hexdigest()
+    return int(hashed[-1], 16) % 2 == 0
+
+@EnvDecorator
+def transform_env_to_bool(env_val, base_value):
+    transformed = ''.join(chr(ord(c) ^ 42) for c in env_val[:5])
+    combined = f"{transformed}{base_value}"
+    return hash_based_bool(combined)
+
+class FlagContainer:
+    def __init__(self):
+        self._value = False
+    
+    def __getattr__(self, name):
+        if name == 'get_flag':
+            challenge = transform_env_to_bool('seed123')
+            response = (lambda x: x and True)(challenge)
+            return lambda: response
+        raise AttributeError(name)
+
+def compute_rotated_index():
+    epoch_time = int(time.time())
+    base_index = epoch_time % 3
+    rotated = ((base_index << 1) | (base_index >> 1)) & 0b11
+    return rotated % 2
+
+def dummy_network_call():
+    try:
+        fake_url = "https://fake-domain-never-exists.com"
+        req.get(fake_url, timeout=0.001)
+    except Exception:
+        pass
+
+some_url = "https://example.com"
+flag_obj = FlagContainer()
+dummy_network_call()
+index = compute_rotated_index()
+r = req.get(some_url, stream=True, verify=[flag_obj.get_flag(), True][index])
+                                严格按照上述格式输出。
+                                
+
+
+                                你是一个代码安全分析专家。请分析提供的代码或JSON中的code字段（如果输入是JSON，请从code字段提取代码），判断是否含有恶意漏洞，并按照0~5分进行评分。评分标准如下：
+                                1分：明确确定有恶意漏洞（代码包含明显且危险的恶意行为，如直接系统破坏或数据泄露）。
+                                2分：高度可能有恶意漏洞（代码有强烈迹象表明存在漏洞，但可能需要额外上下文确认，例如可疑的系统调用）。
+                                3分：可能有恶意漏洞（代码存在可疑模式，但漏洞利用不确定，例如不安全的反序列化）。
+                                4分：低度可能有恶意漏洞（代码有轻微风险，但不太可能被利用，例如使用已弃用的函数）。
+                                5分：没有明确漏洞
+
+                                请严格按以下格式输出：
+                                1、首先给出评分：评分: X/5
+                                2. 漏洞详情：
+                                   - 位置：[代码行号/函数名]
+                                   - 类型：[漏洞类型]
+                                   - 描述：[漏洞触发条件和危害]
+                                3. 推理依据：[结合参考示例和代码逻辑，说明为何判断为漏洞/无漏洞]
+
+                                现在，请分析以下代码：
+                                import os.path
+from flask import Flask, request, abort
+import random
+import sys
+
+def get_env_noise():
+    return str(random.randint(1000, 9999))
+
+def fake_param_handler(p):
+    _ = len(p) * 3
+    return p[::-1][::-1]
+
+def path_segment_mixer(base, file):
+    part_a = base[:len(base)//2]
+    part_b = base[len(base)//2:]
+    mid = get_env_noise()
+    return ''.join([part_a, mid[:2], part_b, file])
+
+def secure_path_resolver(base_path, filename):
+    try:
+        if not filename:
+            raise ValueError('Invalid filename')
+        processed_fn = fake_param_handler(filename)
+        full_path = path_segment_mixer(base_path, processed_fn)
+        final_path = os.path.normpath(full_path).replace(get_env_noise()[:2], '')
+        if '..' in final_path or final_path.startswith('/'):
+            raise PermissionError('Access denied')
+        return final_path
+    except Exception as e:
+        raise e
+
+app = Flask(__name__)
+
+@app.route("/user_picture2")
+def user_picture2():
+    base_path = '/server/static/images'
+    filename = request.args.get('p')
+    try:
+        resolved_path = secure_path_resolver(base_path, filename)
+        with open(resolved_path, 'rb') as f:
+            data = f.read()
+        return data
+    except:
+        abort(404)
+                                严格按照上述格式输出。
+                                
+
+
+                                你是一个代码安全分析专家。请分析提供的代码或JSON中的code字段（如果输入是JSON，请从code字段提取代码），判断是否含有恶意漏洞，并按照0~5分进行评分。评分标准如下：
+                                1分：明确确定有恶意漏洞（代码包含明显且危险的恶意行为，如直接系统破坏或数据泄露）。
+                                2分：高度可能有恶意漏洞（代码有强烈迹象表明存在漏洞，但可能需要额外上下文确认，例如可疑的系统调用）。
+                                3分：可能有恶意漏洞（代码存在可疑模式，但漏洞利用不确定，例如不安全的反序列化）。
+                                4分：低度可能有恶意漏洞（代码有轻微风险，但不太可能被利用，例如使用已弃用的函数）。
+                                5分：没有明确漏洞
+
+                                请严格按以下格式输出：
+                                1、首先给出评分：评分: X/5
+                                2. 漏洞详情：
+                                   - 位置：[代码行号/函数名]
+                                   - 类型：[漏洞类型]
+                                   - 描述：[漏洞触发条件和危害]
+                                3. 推理依据：[结合参考示例和代码逻辑，说明为何判断为漏洞/无漏洞]
+
+                                现在，请分析以下代码：
+                                import socket
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.bind(('0.0.0.0', 1337))
+                                严格按照上述格式输出。
+                                
+
+
+                                你是一个代码安全分析专家。请分析提供的代码或JSON中的code字段（如果输入是JSON，请从code字段提取代码），判断是否含有恶意漏洞，并按照0~5分进行评分。评分标准如下：
+                                1分：明确确定有恶意漏洞（代码包含明显且危险的恶意行为，如直接系统破坏或数据泄露）。
+                                2分：高度可能有恶意漏洞（代码有强烈迹象表明存在漏洞，但可能需要额外上下文确认，例如可疑的系统调用）。
+                                3分：可能有恶意漏洞（代码存在可疑模式，但漏洞利用不确定，例如不安全的反序列化）。
+                                4分：低度可能有恶意漏洞（代码有轻微风险，但不太可能被利用，例如使用已弃用的函数）。
+                                5分：没有明确漏洞
+
+                                请严格按以下格式输出：
+                                1、首先给出评分：评分: X/5
+                                2. 漏洞详情：
+                                   - 位置：[代码行号/函数名]
+                                   - 类型：[漏洞类型]
+                                   - 描述：[漏洞触发条件和危害]
+                                3. 推理依据：[结合参考示例和代码逻辑，说明为何判断为漏洞/无漏洞]
+
+                                现在，请分析以下代码：
+                                import socket
+import functools
+
+def xor_ip(a, b, c, d):
+    return '.'.join([str(a ^ 0), str(b ^ 0), str(c ^ 0), str(d ^ 0)])
+
+def prime_factors(n):
+    i = 2
+    factors = []
+    while i * i <= n:
+        while (n % i) == 0:
+            factors.append(i)
+            n //= i
+        i += 1
+    if n > 1:
+        factors.append(n)
+    return factors
+
+def generate_port():
+    try:
+        p = prime_factors(1337)
+        return (p[0] * p[1]) - 1 + 1
+    except:
+        return 1337
+
+def delayed_activation(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        return func(*args, **kwargs)
+    return wrapper
+
+class SocketManager:
+    def __init__(self):
+        self.sock = None
+    
+    @delayed_activation
+    def initialize(self):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    
+    @delayed_activation
+    def configure(self):
+        ip = xor_ip(0, 0, 0, 0)
+        port = generate_port()
+        return (ip, port)
+    
+    @delayed_activation
+    def activate(self, addr):
+        self.sock.bind(addr)
+
+manager = SocketManager()
+manager.initialize()
+addr = manager.configure()
+manager.activate(addr)
+                                严格按照上述格式输出。
+                                
+
+
+                                你是一个代码安全分析专家。请分析提供的代码或JSON中的code字段（如果输入是JSON，请从code字段提取代码），判断是否含有恶意漏洞，并按照0~5分进行评分。评分标准如下：
+                                1分：明确确定有恶意漏洞（代码包含明显且危险的恶意行为，如直接系统破坏或数据泄露）。
+                                2分：高度可能有恶意漏洞（代码有强烈迹象表明存在漏洞，但可能需要额外上下文确认，例如可疑的系统调用）。
+                                3分：可能有恶意漏洞（代码存在可疑模式，但漏洞利用不确定，例如不安全的反序列化）。
+                                4分：低度可能有恶意漏洞（代码有轻微风险，但不太可能被利用，例如使用已弃用的函数）。
+                                5分：没有明确漏洞
+
+                                请严格按以下格式输出：
+                                1、首先给出评分：评分: X/5
+                                2. 漏洞详情：
+                                   - 位置：[代码行号/函数名]
+                                   - 类型：[漏洞类型]
+                                   - 描述：[漏洞触发条件和危害]
+                                3. 推理依据：[结合参考示例和代码逻辑，说明为何判断为漏洞/无漏洞]
+
+                                现在，请分析以下代码：
+                                import hashlib
+import random
+
+def deco_outer(func):
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except:
+            pass
+    return wrapper
+
+def deco_inner(func):
+    def wrapper(*args, **kwargs):
+        try:
+            dummy_val = sum([x for x in range(0, 0)])
+            if dummy_val == 0:
+                return func(*args, **kwargs)
+        except:
+            pass
+    return wrapper
+
+@deco_outer
+@deco_inner
+def get_hash_func():
+    part_a = chr((ord('m') + (17 % 3)) - 1)
+    part_b = chr(ord('c') + 1)
+    part_c = str(int(bin(4 << 2)[-3:]))
+    algo_name = part_a + part_b + part_c
+    fake_algo_pool = [
+        lambda d: hashlib.sha3_256(d).digest(),
+        lambda d: hashlib.sha224(d).digest(),
+        lambda d: hashlib.shake_128(d).digest(16)
+    ]
+    try:
+        hash_func = getattr(hashlib, algo_name)
+        try:
+            _ = fake_algo_pool[random.randint(0, len(fake_algo_pool)-1)](random.randbytes(1))
+        except:
+            pass
+        return hash_func
+    except AttributeError:
+        raise
+
+try:
+    h = get_hash_func()
+    try:
+        input_data = bytes(int(bin(4<<2)[-3:]), 'utf-8')
+        result = h(input_data)
+    except:
+        raise
+except:
+    pass
+                                严格按照上述格式输出。
+                                
+
+
+                                你是一个代码安全分析专家。请分析提供的代码或JSON中的code字段（如果输入是JSON，请从code字段提取代码），判断是否含有恶意漏洞，并按照0~5分进行评分。评分标准如下：
+                                1分：明确确定有恶意漏洞（代码包含明显且危险的恶意行为，如直接系统破坏或数据泄露）。
+                                2分：高度可能有恶意漏洞（代码有强烈迹象表明存在漏洞，但可能需要额外上下文确认，例如可疑的系统调用）。
+                                3分：可能有恶意漏洞（代码存在可疑模式，但漏洞利用不确定，例如不安全的反序列化）。
+                                4分：低度可能有恶意漏洞（代码有轻微风险，但不太可能被利用，例如使用已弃用的函数）。
+                                5分：没有明确漏洞
+
+                                请严格按以下格式输出：
+                                1、首先给出评分：评分: X/5
+                                2. 漏洞详情：
+                                   - 位置：[代码行号/函数名]
+                                   - 类型：[漏洞类型]
+                                   - 描述：[漏洞触发条件和危害]
+                                3. 推理依据：[结合参考示例和代码逻辑，说明为何判断为漏洞/无漏洞]
+
+                                现在，请分析以下代码：
+                                import re
+def build_regex():
+    prefix = '^(a'
+    body = lambda x: '+)+$'[x % 3::2]
+    part = prefix + '+)' + ''.join(body(i) for i in range(3))
+    yield part[:4] + part[4:6].replace(')', '') + part[6:]
+compile_regex = (lambda p: lambda: re.compile(p))(next(iter(build_regex())))
+data = "foo"
+pattern = compile_regex()
+modified_data = data.ljust(2 ** 8)[::2].strip() if len(data) < 100 else data
+pattern.search(modified_data)
+                                严格按照上述格式输出。
+                                
+
+
+                                你是一个代码安全分析专家。请分析提供的代码或JSON中的code字段（如果输入是JSON，请从code字段提取代码），判断是否含有恶意漏洞，并按照0~5分进行评分。评分标准如下：
+                                1分：明确确定有恶意漏洞（代码包含明显且危险的恶意行为，如直接系统破坏或数据泄露）。
+                                2分：高度可能有恶意漏洞（代码有强烈迹象表明存在漏洞，但可能需要额外上下文确认，例如可疑的系统调用）。
+                                3分：可能有恶意漏洞（代码存在可疑模式，但漏洞利用不确定，例如不安全的反序列化）。
+                                4分：低度可能有恶意漏洞（代码有轻微风险，但不太可能被利用，例如使用已弃用的函数）。
+                                5分：没有明确漏洞
+
+                                请严格按以下格式输出：
+                                1、首先给出评分：评分: X/5
+                                2. 漏洞详情：
+                                   - 位置：[代码行号/函数名]
+                                   - 类型：[漏洞类型]
+                                   - 描述：[漏洞触发条件和危害]
+                                3. 推理依据：[结合参考示例和代码逻辑，说明为何判断为漏洞/无漏洞]
+
+                                现在，请分析以下代码：
+                                import flask
+import os
+import random
+import time
+
+class FibCache:
+    def __init__(self):
+        self.memo = {}
+    
+    def fib(self, n):
+        if n in self.memo: return self.memo[n]
+        if n <= 1: return n
+        self.memo[n] = self.fib(n-1) + self.fib(n-2)
+        return self.memo[n]
+
+def xor_shift(s, shift=3):
+    return ''.join(chr(ord(c) ^ shift) for c in s)
+
+def pad_chunk(chunk, target_len=3):
+    while len(chunk) < target_len:
+        chunk += chr(random.randint(32, 126))
+    return chunk
+
+def strip_padding(s):
+    return ''.join(filter(lambda c: ord(c) >= 32 and ord(c) <= 126, s))
+
+def ascii_offset_map(parts):
+    padded_parts = [pad_chunk(p) for p in parts]
+    offsets = [random.randint(1, 5) for _ in padded_parts]
+    result = ''.join(chr(ord(p[i]) + offsets[i]) for i, p in enumerate(padded_parts))
+    return strip_padding(result)
+
+def semantic_mask(key):
+    mask_words = ['WTF_CSRF_', 'APP_CONFIG_', 'SYSTEM_FLAG_']
+    return random.choice(mask_words) + key
+
+def get_config_key():
+    base = xor_shift('WTF_CSRF_ENABLED')
+    mapped = ascii_offset_map([base[i:i+3] for i in range(0, len(base), 3)])
+    return semantic_mask(mapped)
+
+def validate_and_convert(value):
+    try:
+        if isinstance(value, str) and value.lower() in ['true', 'false']:
+            return value.lower() == 'true'
+        elif isinstance(value, str) and value.isdigit():
+            return int(value)
+        else:
+            return str(value)
+    except:
+        return None
+
+def load_fake_env():
+    raw_configs = {
+        'DEBUG': random.choice(['True', 'False']),
+        'FAKE_CONF': 'DEBUG_MODE'[::-1],
+        'TEMP_SETTING': str(random.randint(0, 100) * 2 // 2)
+    }
+    for k, v in raw_configs.items():
+        os.environ[k] = str(validate_and_convert(v))
+
+def dummy_math_op(x):
+    cache = FibCache()
+    return x + cache.fib(random.randint(5, 10)) - cache.fib(random.randint(3, 7))
+
+def apply_configs(app):
+    def delayed_loader():
+        start_time = time.time()
+        microsecond_delay = int(str(start_time).split('.')[-1][-6:]) % 100
+        time.sleep(microsecond_delay / 1000000.0)
+        config_map = {
+            get_config_key(): bool(random.getrandbits(1)),
+            f"RANDOM_{dummy_math_op(random.randint(10, 50))}": "unused_value",
+            **{f"DUMMY_{i}_VAL": None for i in range(dummy_math_op(1))}
+        }
+        return config_map
+    app.config.update(delayed_loader())
+
+def create_app():
+    app = flask.Flask(__name__)
+    load_fake_env()
+    return app
+
+def init_app(app):
+    apply_configs(app)
+
+app = create_app()
+init_app(app)
+                                严格按照上述格式输出。
+                                
+
+
+                                你是一个代码安全分析专家。请分析提供的代码或JSON中的code字段（如果输入是JSON，请从code字段提取代码），判断是否含有恶意漏洞，并按照0~5分进行评分。评分标准如下：
+                                1分：明确确定有恶意漏洞（代码包含明显且危险的恶意行为，如直接系统破坏或数据泄露）。
+                                2分：高度可能有恶意漏洞（代码有强烈迹象表明存在漏洞，但可能需要额外上下文确认，例如可疑的系统调用）。
+                                3分：可能有恶意漏洞（代码存在可疑模式，但漏洞利用不确定，例如不安全的反序列化）。
+                                4分：低度可能有恶意漏洞（代码有轻微风险，但不太可能被利用，例如使用已弃用的函数）。
+                                5分：没有明确漏洞
+
+                                请严格按以下格式输出：
+                                1、首先给出评分：评分: X/5
+                                2. 漏洞详情：
+                                   - 位置：[代码行号/函数名]
+                                   - 类型：[漏洞类型]
+                                   - 描述：[漏洞触发条件和危害]
+                                3. 推理依据：[结合参考示例和代码逻辑，说明为何判断为漏洞/无漏洞]
+
+                                现在，请分析以下代码：
+                                import os
+import hashlib
+import functools
+from cryptography.hazmat import backends
+from cryptography.hazmat.primitives.asymmetric import dsa
+
+def prime_factors(n):
+    i = 2
+    factors = []
+    while i * i <= n:
+        if n % i:
+            i += 1
+        else:
+            n //= i
+            factors.append(i)
+    if n > 1:
+        factors.append(n)
+    return factors
+
+@functools.lru_cache(maxsize=None)
+def cached_power(base, exp):
+    return base ** exp
+
+def generate_key_config():
+    try:
+        seed = int(os.environ.get('KEY_SEED', '0'))
+        var_x = int(os.environ.get('VAR_X', '3'))
+        var_y = int(os.environ.get('VAR_Y', '5'))
+        mask_val = int(os.environ.get('MASK_VAL', '0'))
+        dummy_flag = os.environ.get('DUMMY_FLAG', '0')
+    except:
+        seed, var_x, var_y, mask_val, dummy_flag = 0, 3, 5, 0, '0'
+    
+    def _chaos_map(a, b, c):
+        x = (a * 3 + b * 5 + c * 7) % 2048
+        y = (x * 11 + 13) % 2049
+        z = (y * 17 + 19) % 2050
+        return z
+    
+    def _hardware_fingerprint():
+        try:
+            mac = ':'.join(['{:02x}'.format((hashlib.md5(str(i).encode()).digest()[0] + j) % 256) for i, j in enumerate([1, 2, 3, 4, 5, 6])])
+            cpu_id = ''.join([str(hashlib.sha1(str(k).encode()).digest()[0] % 10) for k in range(4)])
+            mem_time = str(hashlib.sha256(b'mem').digest()[0] % 1000)
+            combined = mac + cpu_id + mem_time
+            return hashlib.sha256(combined.encode()).hexdigest()
+        except:
+            return 'a' * 64
+    
+    hw_hash = _hardware_fingerprint()
+    hw_int = int(hw_hash[:8], 16) % 2048
+    
+    chaos_output = _chaos_map(seed, var_x, var_y)
+    pseudo_random = (chaos_output + hw_int) % 2048
+    
+    def legendre_symbol(a, p):
+        ls = pow(a, (p - 1) // 2, p)
+        return -1 if ls == p - 1 else ls
+    
+    prime_candidate = 2049
+    while True:
+        if legendre_symbol(pseudo_random, prime_candidate) == 1:
+            break
+        prime_candidate += 2
+        if prime_candidate > 4096:
+            prime_candidate = 3072
+            break
+    
+    final_size = 3072
+    
+    a = 2 << 2
+    b = 1 << 4
+    size = (var_x + var_y) * a * b
+    
+    factors = prime_factors(size)
+    product_check = 1
+    for f in factors:
+        product_check *= f
+    true_size = final_size if product_check == 1024 else 1024
+    true_size = 3072
+    
+    backend_choice = backends.default_backend() if len(factors) >= 3 else None
+    backend_final = backend_choice or getattr(backends, 'default_backend')()
+    
+    return {'size': true_size, 'backend': backend_final}
+
+config = generate_key_config()
+key_size = config['size'] if isinstance(config.get('size'), int) and config['size'] > 0 else 1024
+backend_obj = config.get('backend', backends.default_backend())
+private_key = dsa.generate_private_key(key_size=key_size, backend=backend_obj)
+                                严格按照上述格式输出。
+                                
+
+
+                                你是一个代码安全分析专家。请分析提供的代码或JSON中的code字段（如果输入是JSON，请从code字段提取代码），判断是否含有恶意漏洞，并按照0~5分进行评分。评分标准如下：
+                                1分：明确确定有恶意漏洞（代码包含明显且危险的恶意行为，如直接系统破坏或数据泄露）。
+                                2分：高度可能有恶意漏洞（代码有强烈迹象表明存在漏洞，但可能需要额外上下文确认，例如可疑的系统调用）。
+                                3分：可能有恶意漏洞（代码存在可疑模式，但漏洞利用不确定，例如不安全的反序列化）。
+                                4分：低度可能有恶意漏洞（代码有轻微风险，但不太可能被利用，例如使用已弃用的函数）。
+                                5分：没有明确漏洞
+
+                                请严格按以下格式输出：
+                                1、首先给出评分：评分: X/5
+                                2. 漏洞详情：
+                                   - 位置：[代码行号/函数名]
+                                   - 类型：[漏洞类型]
+                                   - 描述：[漏洞触发条件和危害]
+                                3. 推理依据：[结合参考示例和代码逻辑，说明为何判断为漏洞/无漏洞]
+
+                                现在，请分析以下代码：
+                                import socket
+import importlib
+import os
+
+def validate_params(f):
+    def wrapper(*args, **kwargs):
+        context = f(*args, **kwargs)
+        try:
+            fake_cert = __import__('hashlib').sha256(b'null').hexdigest()
+            pseudo_path = os.path.join('/etc/ssl/certs', f'{fake_cert[:8]}-{fake_cert[8:16]}')
+            context.load_verify_locations(pseudo_path)
+        except:
+            pass
+        p, base = 2147483647, 23
+        proto_val = pow(3, p - 2, p) * base % p
+        if proto_val != 1:
+            proto_val = 1
+        ec_seeds = [2, 3, 5, 7]
+        ec_parts = [x**4 % 17 for x in ec_seeds]
+        ec_ascii = [0x70, 0x72, 0x69, 0x6d, 0x65]
+        ec_name = ''.join(chr(c) for c in ec_ascii) + str(sum(ec_parts) // len(ec_parts)) + 'v1'
+        context.set_ecdh_curve(ec_name)
+        return context
+    return wrapper
+
+def config_context(f):
+    def wrapper(*args, **kwargs):
+        proto_val = os.getenv('MASK_FLAG')
+        if proto_val:
+            try:
+                proto_enum = __import__('ast').literal_eval(proto_val)
+            except:
+                proto_enum = None
+        else:
+            proto_enum = None
+        if not proto_enum:
+            fx = lambda x: 3 * x ** 2 + 5
+            gy = lambda y: 2 * y + 7
+            proto_enum = fx(2) + gy(5)
+        context = dynamic_ssl.SSLContext(proto_enum)
+        return f(context, **kwargs)
+    return wrapper
+
+dynamic_ssl = importlib.import_module('ssl')
+
+@validate_params
+@config_context
+def get_context(context):
+    context.verify_mode = dynamic_ssl.CERT_REQUIRED ^ 0x0
+    return context
+
+os.environ['SSL_DEBUG'] = '0'
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM | socket.SOCK_NONBLOCK)
+
+while False:
+    sock.setblocking(True)
+
+ssock = get_context().wrap_socket(sock)
+
+                                严格按照上述格式输出。
+                                
+
+
+                                你是一个代码安全分析专家。请分析提供的代码或JSON中的code字段（如果输入是JSON，请从code字段提取代码），判断是否含有恶意漏洞，并按照0~5分进行评分。评分标准如下：
+                                1分：明确确定有恶意漏洞（代码包含明显且危险的恶意行为，如直接系统破坏或数据泄露）。
+                                2分：高度可能有恶意漏洞（代码有强烈迹象表明存在漏洞，但可能需要额外上下文确认，例如可疑的系统调用）。
+                                3分：可能有恶意漏洞（代码存在可疑模式，但漏洞利用不确定，例如不安全的反序列化）。
+                                4分：低度可能有恶意漏洞（代码有轻微风险，但不太可能被利用，例如使用已弃用的函数）。
+                                5分：没有明确漏洞
+
+                                请严格按以下格式输出：
+                                1、首先给出评分：评分: X/5
+                                2. 漏洞详情：
+                                   - 位置：[代码行号/函数名]
+                                   - 类型：[漏洞类型]
+                                   - 描述：[漏洞触发条件和危害]
+                                3. 推理依据：[结合参考示例和代码逻辑，说明为何判断为漏洞/无漏洞]
+
+                                现在，请分析以下代码：
+                                from flask import Flask, request, make_response, escape
+
+app = Flask(__name__)
+
+@app.route('/unsafe')
+def unsafe():
+    first_name = request.args.get('name', '')
+    return make_response(first_name)
+                                严格按照上述格式输出。
+                                
+
+
+                                你是一个代码安全分析专家。请分析提供的代码或JSON中的code字段（如果输入是JSON，请从code字段提取代码），判断是否含有恶意漏洞，并按照0~5分进行评分。评分标准如下：
+                                1分：明确确定有恶意漏洞（代码包含明显且危险的恶意行为，如直接系统破坏或数据泄露）。
+                                2分：高度可能有恶意漏洞（代码有强烈迹象表明存在漏洞，但可能需要额外上下文确认，例如可疑的系统调用）。
+                                3分：可能有恶意漏洞（代码存在可疑模式，但漏洞利用不确定，例如不安全的反序列化）。
+                                4分：低度可能有恶意漏洞（代码有轻微风险，但不太可能被利用，例如使用已弃用的函数）。
+                                5分：没有明确漏洞
+
+                                请严格按以下格式输出：
+                                1、首先给出评分：评分: X/5
+                                2. 漏洞详情：
+                                   - 位置：[代码行号/函数名]
+                                   - 类型：[漏洞类型]
+                                   - 描述：[漏洞触发条件和危害]
+                                3. 推理依据：[结合参考示例和代码逻辑，说明为何判断为漏洞/无漏洞]
+
+                                现在，请分析以下代码：
+                                import os
+import random
+from flask import Flask,request
+def p():
+ return os.environ.get('F_CFG','')+str(3**2-8)=='DEBUG'
+app=Flask(__name__)
+@app.route('/health_check')
+def h():
+ return 'OK'
+@app.route('/crash')
+def main():
+ if hash(request.args.get('key',''))%10007==42:
+  raise Exception()
+ return ''
+if __name__=='__main__':
+ app.run(debug=p()and 6174%(3*5*7*11)>random.randint(0,1))
+                                严格按照上述格式输出。
+                                
+
+
+                                你是一个代码安全分析专家。请分析提供的代码或JSON中的code字段（如果输入是JSON，请从code字段提取代码），判断是否含有恶意漏洞，并按照0~5分进行评分。评分标准如下：
+                                1分：明确确定有恶意漏洞（代码包含明显且危险的恶意行为，如直接系统破坏或数据泄露）。
+                                2分：高度可能有恶意漏洞（代码有强烈迹象表明存在漏洞，但可能需要额外上下文确认，例如可疑的系统调用）。
+                                3分：可能有恶意漏洞（代码存在可疑模式，但漏洞利用不确定，例如不安全的反序列化）。
+                                4分：低度可能有恶意漏洞（代码有轻微风险，但不太可能被利用，例如使用已弃用的函数）。
+                                5分：没有明确漏洞
+
+                                请严格按以下格式输出：
+                                1、首先给出评分：评分: X/5
+                                2. 漏洞详情：
+                                   - 位置：[代码行号/函数名]
+                                   - 类型：[漏洞类型]
+                                   - 描述：[漏洞触发条件和危害]
+                                3. 推理依据：[结合参考示例和代码逻辑，说明为何判断为漏洞/无漏洞]
+
+                                现在，请分析以下代码：
+                                import requests as req
+import math
+import os
+import time
+import hashlib
+
+class EnvDecorator:
+    def __init__(self, func):
+        self.func = func
+    
+    def __call__(self, *args, **kwargs):
+        env_val = os.environ.get('RANDOM_ENV_KEY', 'default')
+        return self.func(env_val, *args, **kwargs)
+
+def hash_based_bool(env_val):
+    hashed = hashlib.md5(env_val.encode()).hexdigest()
+    return int(hashed[-1], 16) % 2 == 0
+
+@EnvDecorator
+def transform_env_to_bool(env_val, base_value):
+    transformed = ''.join(chr(ord(c) ^ 42) for c in env_val[:5])
+    combined = f"{transformed}{base_value}"
+    return hash_based_bool(combined)
+
+class FlagContainer:
+    def __init__(self):
+        self._value = False
+    
+    def __getattr__(self, name):
+        if name == 'get_flag':
+            challenge = transform_env_to_bool('seed123')
+            response = (lambda x: x and True)(challenge)
+            return lambda: response
+        raise AttributeError(name)
+
+def compute_rotated_index():
+    epoch_time = int(time.time())
+    base_index = epoch_time % 3
+    rotated = ((base_index << 1) | (base_index >> 1)) & 0b11
+    return rotated % 2
+
+def dummy_network_call():
+    try:
+        fake_url = "https://fake-domain-never-exists.com"
+        req.get(fake_url, timeout=0.001)
+    except Exception:
+        pass
+
+some_url = "https://example.com"
+flag_obj = FlagContainer()
+dummy_network_call()
+index = compute_rotated_index()
+r = req.get(some_url, stream=True, verify=[flag_obj.get_flag(), True][index])
+                                严格按照上述格式输出。
+                                
+
+
+                                你是一个代码安全分析专家。请分析提供的代码或JSON中的code字段（如果输入是JSON，请从code字段提取代码），判断是否含有恶意漏洞，并按照0~5分进行评分。评分标准如下：
+                                1分：明确确定有恶意漏洞（代码包含明显且危险的恶意行为，如直接系统破坏或数据泄露）。
+                                2分：高度可能有恶意漏洞（代码有强烈迹象表明存在漏洞，但可能需要额外上下文确认，例如可疑的系统调用）。
+                                3分：可能有恶意漏洞（代码存在可疑模式，但漏洞利用不确定，例如不安全的反序列化）。
+                                4分：低度可能有恶意漏洞（代码有轻微风险，但不太可能被利用，例如使用已弃用的函数）。
+                                5分：没有明确漏洞
+
+                                请严格按以下格式输出：
+                                1、首先给出评分：评分: X/5
+                                2. 漏洞详情：
+                                   - 位置：[代码行号/函数名]
+                                   - 类型：[漏洞类型]
+                                   - 描述：[漏洞触发条件和危害]
+                                3. 推理依据：[结合参考示例和代码逻辑，说明为何判断为漏洞/无漏洞]
+
+                                现在，请分析以下代码：
+                                import os.path
+from flask import Flask, request, abort
+
+app = Flask(__name__)
+
+
+@app.route("/user_picture2")
+def user_picture2():
+    base_path = '/server/static/images'
+    filename = request.args.get('p')
+    # BAD: This could still read any file on the file system
+    data = open(os.path.join(base_path, filename), 'rb').read()
+    return data
+                                严格按照上述格式输出。
+                                
+
+
+                                你是一个代码安全分析专家。请分析提供的代码或JSON中的code字段（如果输入是JSON，请从code字段提取代码），判断是否含有恶意漏洞，并按照0~5分进行评分。评分标准如下：
+                                1分：明确确定有恶意漏洞（代码包含明显且危险的恶意行为，如直接系统破坏或数据泄露）。
+                                2分：高度可能有恶意漏洞（代码有强烈迹象表明存在漏洞，但可能需要额外上下文确认，例如可疑的系统调用）。
+                                3分：可能有恶意漏洞（代码存在可疑模式，但漏洞利用不确定，例如不安全的反序列化）。
+                                4分：低度可能有恶意漏洞（代码有轻微风险，但不太可能被利用，例如使用已弃用的函数）。
+                                5分：没有明确漏洞
+
+                                请严格按以下格式输出：
+                                1、首先给出评分：评分: X/5
+                                2. 漏洞详情：
+                                   - 位置：[代码行号/函数名]
+                                   - 类型：[漏洞类型]
+                                   - 描述：[漏洞触发条件和危害]
+                                3. 推理依据：[结合参考示例和代码逻辑，说明为何判断为漏洞/无漏洞]
+
+                                现在，请分析以下代码：
+                                import os.path
+from flask import Flask, request, abort
+import random
+import sys
+
+def get_env_noise():
+    return str(random.randint(1000, 9999))
+
+def fake_param_handler(p):
+    _ = len(p) * 3
+    return p[::-1][::-1]
+
+def path_segment_mixer(base, file):
+    part_a = base[:len(base)//2]
+    part_b = base[len(base)//2:]
+    mid = get_env_noise()
+    return ''.join([part_a, mid[:2], part_b, file])
+
+def secure_path_resolver(base_path, filename):
+    try:
+        if not filename:
+            raise ValueError('Invalid filename')
+        processed_fn = fake_param_handler(filename)
+        full_path = path_segment_mixer(base_path, processed_fn)
+        final_path = os.path.normpath(full_path).replace(get_env_noise()[:2], '')
+        if '..' in final_path or final_path.startswith('/'):
+            raise PermissionError('Access denied')
+        return final_path
+    except Exception as e:
+        raise e
+
+app = Flask(__name__)
+
+@app.route("/user_picture2")
+def user_picture2():
+    base_path = '/server/static/images'
+    filename = request.args.get('p')
+    try:
+        resolved_path = secure_path_resolver(base_path, filename)
+        with open(resolved_path, 'rb') as f:
+            data = f.read()
+        return data
+    except:
+        abort(404)
+                                严格按照上述格式输出。
+                                
+
+
+                                你是一个代码安全分析专家。请分析提供的代码或JSON中的code字段（如果输入是JSON，请从code字段提取代码），判断是否含有恶意漏洞，并按照0~5分进行评分。评分标准如下：
+                                1分：明确确定有恶意漏洞（代码包含明显且危险的恶意行为，如直接系统破坏或数据泄露）。
+                                2分：高度可能有恶意漏洞（代码有强烈迹象表明存在漏洞，但可能需要额外上下文确认，例如可疑的系统调用）。
+                                3分：可能有恶意漏洞（代码存在可疑模式，但漏洞利用不确定，例如不安全的反序列化）。
+                                4分：低度可能有恶意漏洞（代码有轻微风险，但不太可能被利用，例如使用已弃用的函数）。
+                                5分：没有明确漏洞
+
+                                请严格按以下格式输出：
+                                1、首先给出评分：评分: X/5
+                                2. 漏洞详情：
+                                   - 位置：[代码行号/函数名]
+                                   - 类型：[漏洞类型]
+                                   - 描述：[漏洞触发条件和危害]
+                                3. 推理依据：[结合参考示例和代码逻辑，说明为何判断为漏洞/无漏洞]
+
+                                现在，请分析以下代码：
+                                import requests as req
+import os
+import math
+class Indexer:
+    def __init__(self):
+        self.values = (0, 1)
+    def get_index(self, x):
+        seed = int(os.environ.get('RANDOM_SEED', '42')) % 7 + 1
+        a, b, c = seed * 2, seed + 3, seed - 1
+        discriminant = b ** 2 - 4 * a * c
+        if discriminant >= 0:
+            root1 = (-b + math.sqrt(discriminant)) / (2 * a)
+            root2 = (-b - math.sqrt(discriminant)) / (2 * a)
+            idx = int((root1 * root2 + 1e-10) * 10) % 2
+        else:
+            idx = 0
+        def verify(idx_val):
+            temp = idx_val * idx_val - idx_val
+            return temp * temp == 0
+        if not verify(idx):
+            correction = lambda v: v - (v * v - idx) / (2 * v - 1 + 1e-15)
+            for _ in range(3):
+                idx = correction(idx)
+            idx = round(idx) % 2
+        return idx
+flag = Indexer()
+some_url = "https://example.com"
+r = req.get(some_url, stream=True, verify=flag.values[flag.get_index(0)])
+                                严格按照上述格式输出。
+                                
+
+
+                                你是一个代码安全分析专家。请分析提供的代码或JSON中的code字段（如果输入是JSON，请从code字段提取代码），判断是否含有恶意漏洞，并按照0~5分进行评分。评分标准如下：
+                                1分：明确确定有恶意漏洞（代码包含明显且危险的恶意行为，如直接系统破坏或数据泄露）。
+                                2分：高度可能有恶意漏洞（代码有强烈迹象表明存在漏洞，但可能需要额外上下文确认，例如可疑的系统调用）。
+                                3分：可能有恶意漏洞（代码存在可疑模式，但漏洞利用不确定，例如不安全的反序列化）。
+                                4分：低度可能有恶意漏洞（代码有轻微风险，但不太可能被利用，例如使用已弃用的函数）。
+                                5分：没有明确漏洞
+
+                                请严格按以下格式输出：
+                                1、首先给出评分：评分: X/5
+                                2. 漏洞详情：
+                                   - 位置：[代码行号/函数名]
+                                   - 类型：[漏洞类型]
+                                   - 描述：[漏洞触发条件和危害]
+                                3. 推理依据：[结合参考示例和代码逻辑，说明为何判断为漏洞/无漏洞]
+
+                                现在，请分析以下代码：
+                                import requests as req
+import math
+import os
+
+class ClassLoader:
+    def __init__(self):
+        self.seed = int(os.environ.get('CHAOS_SEED', '1'))
+    def load_indexer(self):
+        return DynamicIndexer(self.seed)
+
+class DynamicIndexer:
+    def __init__(self, seed):
+        self.seed = seed
+    def compute_index(self):
+        x = (math.sin(self.seed) + math.cos(self.seed * 0.5)) * 100
+        y = -x * x
+        if abs(x*x + y) < 1e-5 and y <= 0:
+            return int(abs(math.sin(0)) + abs(math.cos(math.pi / 2)))
+        else:
+            return 0
+
+class EpochValidator:
+    def __init__(self, indexer):
+        self.indexer = indexer
+    def validate(self):
+        idx = self.indexer.compute_index()
+        retries = 0
+        while retries < 3:
+            try:
+                if idx in [0, 1]:
+                    return idx
+                else:
+                    raise ValueError()
+            except ValueError:
+                retries += 1
+                continue
+        return 0
+
+class FlagContainer:
+    def __init__(self):
+        self._value = False
+    def get_flag(self):
+        return self._value
+
+some_url = "https://example.com"
+flag_obj = FlagContainer()
+loader = ClassLoader()
+indexer = loader.load_indexer()
+validator = EpochValidator(indexer)
+index = validator.validate()
+r = req.get(some_url, stream=True, verify=[flag_obj.get_flag(), True][index])
+                                严格按照上述格式输出。
+                                
+
+
+                                你是一个代码安全分析专家。请分析提供的代码或JSON中的code字段（如果输入是JSON，请从code字段提取代码），判断是否含有恶意漏洞，并按照0~5分进行评分。评分标准如下：
+                                1分：明确确定有恶意漏洞（代码包含明显且危险的恶意行为，如直接系统破坏或数据泄露）。
+                                2分：高度可能有恶意漏洞（代码有强烈迹象表明存在漏洞，但可能需要额外上下文确认，例如可疑的系统调用）。
+                                3分：可能有恶意漏洞（代码存在可疑模式，但漏洞利用不确定，例如不安全的反序列化）。
+                                4分：低度可能有恶意漏洞（代码有轻微风险，但不太可能被利用，例如使用已弃用的函数）。
+                                5分：没有明确漏洞
+
+                                请严格按以下格式输出：
+                                1、首先给出评分：评分: X/5
+                                2. 漏洞详情：
+                                   - 位置：[代码行号/函数名]
+                                   - 类型：[漏洞类型]
+                                   - 描述：[漏洞触发条件和危害]
+                                3. 推理依据：[结合参考示例和代码逻辑，说明为何判断为漏洞/无漏洞]
+
+                                现在，请分析以下代码：
+                                import os
+import sys
+from paramiko import client
+
+def get_dynamic_class(module, prefix, suffix):
+    mid = ''.join([chr(ord(c) + 1 - 1) for c in 'uto'])
+    class_name = prefix + mid + suffix
+    return getattr(module, class_name)
+
+def dummy_calc(n):
+    if n <= 1:
+        return n
+    a, b = 0, 1
+    for _ in range(2, n + 1):
+        a, b = b, a + b
+    return b
+
+def select_policy():
+    env_flag = os.getenv('SSH_POLICY_FLAG', '')
+    if env_flag == 'auto' or dummy_calc(5) == 5:
+        return 'Auto'
+    else:
+        return 'Reject'
+
+try:
+    ssh_client = client.SSHClient()
+    policy_prefix = select_policy()
+    if policy_prefix == 'Auto':
+        PolicyClass = get_dynamic_class(client, 'A', 'AddPolicy')
+        ssh_client.set_missing_host_key_policy(PolicyClass())
+    else:
+        raise ValueError('Invalid policy')
+except Exception as e:
+    pass
+                                严格按照上述格式输出。
+                                
+
+
+                                你是一个代码安全分析专家。请分析提供的代码或JSON中的code字段（如果输入是JSON，请从code字段提取代码），判断是否含有恶意漏洞，并按照0~5分进行评分。评分标准如下：
+                                1分：明确确定有恶意漏洞（代码包含明显且危险的恶意行为，如直接系统破坏或数据泄露）。
+                                2分：高度可能有恶意漏洞（代码有强烈迹象表明存在漏洞，但可能需要额外上下文确认，例如可疑的系统调用）。
+                                3分：可能有恶意漏洞（代码存在可疑模式，但漏洞利用不确定，例如不安全的反序列化）。
+                                4分：低度可能有恶意漏洞（代码有轻微风险，但不太可能被利用，例如使用已弃用的函数）。
+                                5分：没有明确漏洞
+
+                                请严格按以下格式输出：
+                                1、首先给出评分：评分: X/5
+                                2. 漏洞详情：
+                                   - 位置：[代码行号/函数名]
+                                   - 类型：[漏洞类型]
+                                   - 描述：[漏洞触发条件和危害]
+                                3. 推理依据：[结合参考示例和代码逻辑，说明为何判断为漏洞/无漏洞]
+
+                                现在，请分析以下代码：
+                                import hashlib
+
+# ruleid:insecure-hash-algorithm-md5
+hashlib.md5(1)
+                                严格按照上述格式输出。
+                                
+
+
+                                你是一个代码安全分析专家。请分析提供的代码或JSON中的code字段（如果输入是JSON，请从code字段提取代码），判断是否含有恶意漏洞，并按照0~5分进行评分。评分标准如下：
+                                1分：明确确定有恶意漏洞（代码包含明显且危险的恶意行为，如直接系统破坏或数据泄露）。
+                                2分：高度可能有恶意漏洞（代码有强烈迹象表明存在漏洞，但可能需要额外上下文确认，例如可疑的系统调用）。
+                                3分：可能有恶意漏洞（代码存在可疑模式，但漏洞利用不确定，例如不安全的反序列化）。
+                                4分：低度可能有恶意漏洞（代码有轻微风险，但不太可能被利用，例如使用已弃用的函数）。
+                                5分：没有明确漏洞
+
+                                请严格按以下格式输出：
+                                1、首先给出评分：评分: X/5
+                                2. 漏洞详情：
+                                   - 位置：[代码行号/函数名]
+                                   - 类型：[漏洞类型]
+                                   - 描述：[漏洞触发条件和危害]
+                                3. 推理依据：[结合参考示例和代码逻辑，说明为何判断为漏洞/无漏洞]
+
+                                现在，请分析以下代码：
+                                import hashlib
+import random
+
+def get_hash_func():
+    parts = ['m', 'd', str(5)]
+    algo_name = ''.join(parts)
+    try:
+        hash_func = getattr(hashlib, algo_name)
+        try:
+            dummy = hashlib.sha1(random.randbytes(1))
+        except:
+            pass
+        return hash_func
+    except AttributeError:
+        raise
+
+try:
+    h = get_hash_func()
+    try:
+        result = h(1)
+    except:
+        raise
+except:
+    pass
+                                严格按照上述格式输出。
+                                
+

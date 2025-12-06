@@ -5,9 +5,11 @@ import os
 # 初始化Flask应用
 app = Flask(__name__)
 
+# 配置Jinja2环境（简化版）
 jinja_env = jinja2.Environment(
     loader=jinja2.FileSystemLoader("templates"),
-    lstrip_blocks=True
+    lstrip_blocks=True,
+    autoescape=True
 )
 
 # 补写的/profile/路由

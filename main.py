@@ -16,20 +16,10 @@ from tree import Node
 global config_path
 
 
+
+
 def update_metadata(output_dir, prevrun_dir, node):
     print(output_dir)
-    # with open(os.path.join(output_dir, "hgm_metadata.jsonl"), "a") as f:
-    #     f.write(
-    #         json.dumps(
-    #             {
-    #                 "nodes": [
-    #                     node.save_as_dict()
-    #                 ],
-    #             },
-    #             indent=2,
-    #         )
-    #         + "\n"
-    #     )
     metadata_file = os.path.join(prevrun_dir, "metadata.json")
     # 读取现有的 metadata.json 文件
     if os.path.exists(metadata_file):
@@ -114,17 +104,13 @@ def initialize_run(
             init_code_path=initial_code_path,
             config=config_path
         )
-        print(verify_result)
         os.makedirs(output_dir + f"/{run_id}", exist_ok=True)
         with open(output_dir + f"/{run_id}" + "/verify_result.txt", 'w', encoding='utf-8') as f:
-            f.write(verify_result)  # 写入字符串
-        score_match = re.search(r'评分:\s*(\d)/5', verify_result)
-        if not score_match:
-            raise ValueError("Can not find score.")
-        score = int(score_match.group(1))
-        print("Verification score:", score)
+            f.write(str(verify_result))  # 写入字符串
+        score = verify_result["score"]
+        verify_text = "\n".join(verify_result["verify_result"])
         # 创建初始节点
-        initial_node = Node(node_id="initial", verify_result=verify_result, score=score, code=code, ori_code=code)
+        initial_node = Node(node_id="initial", verify_result=verify_text, score=score, code=code, ori_code=code)
 
         # 保存初始节点
         nodes["initial"] = initial_node
@@ -175,9 +161,6 @@ def initialize_run(
                 # 确保父子关系是双向的
                 if node not in parent_node.child_ids:
                     parent_node.child_ids.append(node)
-        # for node_id, node in nodes.items():
-        #     print(node_id, node.child_ids, node.score, node)
-        # 恢复submitted_ids
         submitted_ids_data = prev_metadata.get("submitted_ids", {})
         for node_id, task_list in submitted_ids_data.items():
             submitted_ids[node_id] = set(task_list)
@@ -197,9 +180,6 @@ def initialize_run(
     obfuscate_utils.nodes = nodes
 
     print(f"Initialization completed. Total nodes: {len(nodes)}")
-    # node_info = get_node_by_node_id("initial")
-    # if node_info:
-    #     print(json.dumps(node_info, indent=2))
     return submitted_ids
 
 
@@ -446,7 +426,6 @@ def main():
     output_dir = os.path.abspath(os.path.join("./output", run_id))
     os.makedirs(output_dir, exist_ok=True)
     print(f"Working directory: {os.getcwd()}")
-    #print(f"Using config file: {args.config}")
     print(f"Output directory: {output_dir}")
     print(f"Output directory exists: {os.path.exists(output_dir)}")
     cwe_type = args.cwe_type if args.cwe_type is not None else "CWE79_direct-use-of-jinja2"
@@ -462,10 +441,8 @@ def main():
     node_info = get_node_by_node_id("initial")
 
     def TS_sample(evals, nodes):
-        print(evals)
         alphas = [1 + np.sum(de)/5 for de in evals]
         betas = [1 + len(de) - np.sum(de)/5 for de in evals]
-        print(alphas, betas)
         if opt_cfg.cool_down:
             alphas = np.array(alphas) * (
                 10000
@@ -480,7 +457,6 @@ def main():
                      / (exec_cfg.max_task_evals - obfuscate_utils.n_task_evals) ** opt_cfg.beta
             )
         thetas = np.random.beta(alphas, betas)
-        print(thetas, np.argmax(thetas))
         return np.argmax(thetas)
 
     n_pending_expands = 0
@@ -489,8 +465,6 @@ def main():
 
     def expand(expand_id):
         with lock:
-            for node in obfuscate_utils.nodes.values():
-                print(node.score)
             nodes = [
                 node
                 for node in obfuscate_utils.nodes.values()
@@ -524,22 +498,23 @@ def main():
             print("----------------------------")
             print(code)
             print("----------------------------")
+            origin_code = obfuscate_utils.get_metadata(prevrun_dir)
             os.makedirs(output_dir + f"/{expand_id}", exist_ok=True)
             with open(output_dir + f"/{expand_id}" + "/obfuscate_result.txt", 'w', encoding='utf-8') as f:
                 f.write(code)  # 写入字符串
             #检测
-            verify_result = obfuscate_utils.eval_code(node_id=run_id, code=code, config=config_path)
+            verify_result = obfuscate_utils.eval_code(node_id=run_id, obfuscated_code=code, origin_code=origin_code,
+                                                      config=config_path, strategy=child_node_strategy)
             print(verify_result)
             with open(output_dir + f"/{expand_id}" + "/verify_result.txt", 'w', encoding='utf-8') as f:
-                f.write(verify_result)  # 写入字符串
-            score_match = re.search(r'评分:\s*(\d)/5', verify_result)
-            if not score_match:
-                raise ValueError("Can not find score.")
-            score = int(score_match.group(1))
+                verify_text = "\n".join(verify_result["verify_result"])
+                f.write(verify_text)  # 写入字符串
+            score = verify_result["score"]
             print("Verification score:", score)
+            verify_text = "\n".join(verify_result["verify_result"])
             with lock:
                 new_node = Node(node_id=run_id, parent_id=selected_node.node_id, strategy=child_node_strategy,
-                                score=score, verify_result=verify_result, code=code, ori_code=selected_node.code)
+                                score=score, verify_result=verify_text, code=code, ori_code=selected_node.code)
                 selected_node.child_ids.append(
                     new_node
                 )

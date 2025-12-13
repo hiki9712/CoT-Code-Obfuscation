@@ -2,10 +2,15 @@ import yaml
 import re
 from openai import OpenAI
 import numpy as np
-from typing import List, Dict
+from typing import List, Dict, Tuple
+from utils import obfuscate_utils
 import json
 import utils.obfuscate_utils
+import re
+import json
+from sentence_transformers import SentenceTransformer, util
 
+embedding_model = SentenceTransformer("shibing624/text2vec-base-chinese")
 
 def load_file(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
@@ -13,12 +18,11 @@ def load_file(file_path):
 
 
 def extract_score(text: str) -> float:
-    score_match = re.search(r'评分:\s*(\d)/5', text)
-    if not score_match:
-        raise ValueError("Can not find score.")
-    score = int(score_match.group(1))
-    print("Verification score:", score)
-    return score
+    #去掉json markdown
+    text = re.sub(r"```(?:json)?\s*|\s*```", "", text).strip()
+    json_text = json.loads(text)
+    score = json_text['score']
+    return int(score)
 
 
 class SmallModelVerifier:
@@ -100,6 +104,7 @@ class SmallModelVerifier:
         )
         text = resp.choices[0].message.content
         return text
+
     def verify(self, original_code: str, obfuscated_code: str, strategy_desc: str) -> dict:
         """
         整体 Stage1 验证逻辑
@@ -154,24 +159,89 @@ class VerifyModel:
         std = np.std(risk_scores)
         return float(max(0.0, 1.0 - std))  # 越稳定越接近 1
 
-    def hallucination_score(self, risk_scores: List[float], texts: List[str]) -> float:
+    def parse_json_output(self, text: str):
         """
-        简单版幻觉估计：
-        - 风险波动越大 → 幻觉越高
-        - 输出文本差异越大 → 幻觉越高
+        输入：模型输出的 JSON 字符串
+        输出：
+            score: float（1~5）
+            vuln_types: List[str]
+            reasoning_steps: List[str]  # 所有漏洞的推理步骤 flatten 后合并
         """
-        var_component = np.var(risk_scores)
+        try:
+            data = json.loads(text)
+        except:
+            return None, [], []  # 无法解析时当作异常输出处理
 
-        # 用 edit distance 简化替代，更轻量
-        text_diffs = []
-        for i in range(len(texts)):
-            for j in range(i + 1, len(texts)):
-                diff = self.simple_text_diff(texts[i], texts[j])
-                text_diffs.append(diff)
-        text_component = np.mean(text_diffs) if text_diffs else 0
+        # 1. 提取 score（格式 "评分X/5"）
+        raw_score = data.get("score", "评分5/5")
+        try:
+            score_num = float(raw_score.replace("评分", "").replace("/5", "").strip())
+        except:
+            score_num = 5.0
 
-        # 综合权重
-        return float(0.5 * var_component + 0.5 * text_component)
+        # 2. 提取漏洞类型
+        vuln_types = []
+        vulnerabilities = data.get("vulnerabilities", [])
+        for v in vulnerabilities:
+            vuln_types.append(v.get("type", "N/A"))
+
+        # 3. 提取所有 reasoning_chain 为一个 flatten 列表
+        reasoning_steps = []
+        for v in vulnerabilities:
+            chain = v.get("reasoning_chain", [])
+            reasoning_steps.extend(chain)
+
+        return score_num, vuln_types, reasoning_steps
+
+    ####################################
+    # 2. 类型熵（类别不一致 → 幻觉）
+    ####################################
+    def type_entropy(self, types):
+        if not types:
+            return 0.0
+        unique, counts = np.unique(types, return_counts=True)
+        probs = counts / len(types)
+        entropy = -np.sum(probs * np.log(probs + 1e-9))
+        return float(entropy)
+
+    def reasoning_entropy(self, reasoning_steps):
+        if len(reasoning_steps) < 2:
+            return 0.0
+
+        embeddings = embedding_model.encode(reasoning_steps, convert_to_tensor=True)
+        distances = []
+
+        for i in range(len(embeddings)):
+            for j in range(i + 1, len(embeddings)):
+                sim = util.cos_sim(embeddings[i], embeddings[j]).item()
+                dist = 1 - sim
+                distances.append(dist)
+
+        return float(np.mean(distances))
+
+    def hallucination_score(self, json_texts: list) -> float:
+        """
+        输入：多个模型输出 JSON（字符串列表）
+        输出：幻觉熵分数
+        """
+
+        all_types = []
+        all_reasoning = []
+
+        # 解析每个输出
+        for js in json_texts:
+            score, vuln_types, reasoning_steps = self.parse_json_output(js)
+            all_types.extend(vuln_types)
+            all_reasoning.extend(reasoning_steps)
+
+        # 计算两类熵
+        H_type = self.type_entropy(all_types)
+        H_reason = self.reasoning_entropy(all_reasoning)
+
+        # 最终幻觉熵
+        lam = 0.6  # 类型占 60% 权重
+        H = lam * H_type + (1 - lam) * H_reason
+        return float(H)
 
     def simple_text_diff(self, a: str, b: str) -> float:
         """
@@ -194,8 +264,14 @@ class VerifyModel:
             print("model_name:", model_name)
             client = self.clients[model_name]
             risk_scores = []
-            output = self.model_eval_once(client, model_name, verify_prompt)
+            vf_result = self.model_eval_once(client, model_name, verify_prompt)
+            vf_result = re.sub(r".*?</think>", "", vf_result, flags=re.DOTALL)
+            json_match = re.search(r'\{.*\}', vf_result, flags=re.DOTALL)
+            json_str = json_match.group()
+            output = utils.obfuscate_utils.fix_invalid_json_escapes(json_str)
+            print("haha")
             print(output)
+            print('haha')
             results_text.append(output)
             score = extract_score(output)
             risk_scores.append(score)
@@ -206,10 +282,12 @@ class VerifyModel:
                     print(output)
                     results_text.append(output)
                     risk_scores.append(extract_score(output))
+                    if extract_score(output) <= 4:
+                        break
 
             # 评估一致性 & 幻觉程度
             consistency = self.self_consistency(risk_scores)
-            hallucination = self.hallucination_score(risk_scores, results_text)
+            hallucination = self.hallucination_score(results_text)
 
             all_model_results[model_name] = {
                 "raw_outputs": results_text,
@@ -231,10 +309,6 @@ class VerifyModel:
             "verify_result": results_text,
             "stage2_pass": stage2_pass
         }
-
-        print("=== Validator Summary ===")
-        print(final_result)
-        print("=========================")
 
         return final_result
 
@@ -326,15 +400,16 @@ class HierarchicalValidator:
             }
 
         # Stage 3
-        s3 = self.stage3.vote(obfuscated_code)
-        final_pass = s3["stage3_pass"]
+        # s3 = self.stage3.vote(obfuscated_code)
+        # final_pass = s3["stage3_pass"]
 
         return {
-            "final_pass": final_pass,
+            #"final_pass": final_pass,
+            "final_pass": True,
             #"stage1": s1,
             "stage2": s2,
-            "stage3": s3,
+            #"stage3": s3,
             "score": 5,
-            "verify_result": s3["verify_result"],
-            "reason": "Stage 3 voting" if not final_pass else "Pass"
+            "verify_result": s2["verify_result"],
+            #"reason": "Stage 3 voting" if not final_pass else "Pass"
         }

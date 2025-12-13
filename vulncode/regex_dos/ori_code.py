@@ -2,7 +2,7 @@ import re
 
 redos = r"^(a+)+$"
 
-data = "foo"
+data = "a" * 100 + "b"
 
 # ruleid: regex_dos
 pattern = re.compile(redos)

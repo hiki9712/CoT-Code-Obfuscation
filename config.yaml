@@ -12,7 +12,7 @@ obfuscator:
   system: ./prompts/obfuscation_system_prompt.txt
 
 reviewer:
-  small_model: ["qwen3-1.7b"]
+  small_model: ["deepseek-r1"]
   model: ["deepseek-r1"]
   moe_model: ["qwen3-4b", "llama-4-scout-17b-16e-instruct", "deepseek-r1", "kimi-k2-instruct"]
   api_key:

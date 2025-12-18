@@ -177,6 +177,7 @@ def eval_code(
     node_id,
     init_code_path=None,
     obfuscated_code=None,
+    obfuscated_code_path=None,
     origin_code=None,
     strategy=None,
     config="./config.yaml"
@@ -186,10 +187,10 @@ def eval_code(
         #直接评估
         with open(init_code_path, 'r', encoding='utf-8') as file:
             code = file.read()
-        verify_result = vr.verify(code, code, strategy)
+        verify_result = vr.verify(code, code, init_code_path, strategy)
         return verify_result, code
     else:
-        verify_result = vr.verify(origin_code, obfuscated_code, strategy)
+        verify_result = vr.verify(origin_code, obfuscated_code, obfuscated_code_path, strategy)
         return verify_result
 
 

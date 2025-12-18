@@ -1,5 +1,6 @@
 import yaml
 import re
+import bandit
 from openai import OpenAI
 import numpy as np
 from typing import List, Dict, Tuple
@@ -9,8 +10,9 @@ import utils.obfuscate_utils
 import re
 import json
 from sentence_transformers import SentenceTransformer, util
+from bandit.core import manager, config
 
-embedding_model = SentenceTransformer("shibing624/text2vec-base-chinese")
+#embedding_model = SentenceTransformer("shibing624/text2vec-base-chinese")
 
 def load_file(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
@@ -43,18 +45,56 @@ class SmallModelVerifier:
             for m in self.small_models
         }
 
-    def functional_check(self, original_code: str, obfuscated_code: str, strategy_desc: str) -> dict:
+    def static_analysis(self, file_path):
+        # 1. 初始化 Bandit 配置
+        bandit_config = config.BanditConfig()
+        # 2. 创建扫描管理器
+        b_manager = manager.BanditManager(bandit_config, agg_type="file")
+        # 3. 加载并扫描目标文件
+        b_manager.discover_files([file_path], recursive=False)
+        b_manager.run_tests()
+        # 4. 解析扫描结果
+        results = b_manager.get_issue_list()
+        # 5. 输出漏洞详情
+        print(results)
+        if not results:
+            print("未检测到安全漏洞")
+            return True, results
+        return False, results
+
+    def functional_check(self, original_code: str, obfuscated_code: str, obfuscated_code_path: str, strategy_desc: str) -> dict:
         """
         简易功能一致性检查方式：
         1. 对代码生成描述
         2. 与原描述比对（可在外部输入原始语义）
         NOTE: 你可在此替换为你已有的功能等价性检查
         """
+        # 静态工具检测
+        static_pass, static_result = self.static_analysis(obfuscated_code_path)
+        if not static_pass:
+            raw = []
+            for idx, issue in enumerate(static_result, 1):
+                result = {
+                    "vulnerability": f"\n【漏洞 {idx}】",
+                    "describe": f"描述：{issue}",
+                }
+                raw.append(result)
+            return {
+                "pass": False,
+                "reason": "未通过静态检测",
+                "raw": raw
+            }
+        return {
+            "pass": True,
+            "reason": "",
+            "raw": ""
+        }
         function_prompt = load_file(self.config['functional_test']).format(
             original_code=original_code,
             obfuscated_code=obfuscated_code,
             strategy_description=strategy_desc
         )
+        print(function_prompt)
         model_name = self.small_models[0]
         client = self.clients[model_name]
         try:
@@ -105,29 +145,45 @@ class SmallModelVerifier:
         text = resp.choices[0].message.content
         return text
 
-    def verify(self, original_code: str, obfuscated_code: str, strategy_desc: str) -> dict:
+    def verify(self, original_code: str, obfuscated_code: str, obfuscated_code_path: str, strategy_desc: str) -> dict:
         """
         整体 Stage1 验证逻辑
         """
-        func_ok = self.functional_check(original_code, obfuscated_code, strategy_desc)
+        func_ok = self.functional_check(original_code, obfuscated_code, obfuscated_code_path, strategy_desc)
         text = ""
         risk_scores = []
-        for m, c in self.clients.items():
-            text = self.small_model_detect(c, m, obfuscated_code)
-            score = extract_score(text)
-            risk_scores.append(score)
+        # for m, c in self.clients.items():
+        #     text = self.small_model_detect(c, m, obfuscated_code)
+        #     score = extract_score(text)
+        #     risk_scores.append(score)
+        #
+        # avg_score = float(np.mean(risk_scores))
+        #
+        # pass_flag = func_ok and (avg_score == 5)  # 阈值可调整
 
-        avg_score = float(np.mean(risk_scores))
-
-        pass_flag = func_ok and (avg_score == 5)  # 阈值可调整
-
-        return {
-            "stage1_pass": pass_flag,
-            "functional_ok": func_ok,
-            "avg_small_model_score": avg_score * 0.2,
-            "raw_scores": risk_scores,
-            "verify_result": text
-        }
+        # return {
+        #     "stage1_pass": pass_flag,
+        #     "functional_ok": func_ok,
+        #     "avg_small_model_score": avg_score,
+        #     "raw_scores": risk_scores,
+        #     "verify_result": text
+        # }
+        if func_ok["pass"]:
+            return {
+                "stage1_pass": func_ok["pass"],
+                "functional_ok": func_ok,
+                "avg_small_model_score": 5,
+                "raw_scores": risk_scores,
+                "verify_result": func_ok["raw"]
+            }
+        else:
+            return {
+                "stage1_pass": func_ok["pass"],
+                "functional_ok": func_ok,
+                "avg_small_model_score": 1,
+                "raw_scores": risk_scores,
+                "verify_result": func_ok["raw"]
+            }
 
 
 class VerifyModel:
@@ -204,18 +260,18 @@ class VerifyModel:
         entropy = -np.sum(probs * np.log(probs + 1e-9))
         return float(entropy)
 
-    def reasoning_entropy(self, reasoning_steps):
-        if len(reasoning_steps) < 2:
-            return 0.0
-
-        embeddings = embedding_model.encode(reasoning_steps, convert_to_tensor=True)
-        distances = []
-
-        for i in range(len(embeddings)):
-            for j in range(i + 1, len(embeddings)):
-                sim = util.cos_sim(embeddings[i], embeddings[j]).item()
-                dist = 1 - sim
-                distances.append(dist)
+    # def reasoning_entropy(self, reasoning_steps):
+    #     if len(reasoning_steps) < 2:
+    #         return 0.0
+    #
+    #     embeddings = embedding_model.encode(reasoning_steps, convert_to_tensor=True)
+    #     distances = []
+    #
+    #     for i in range(len(embeddings)):
+    #         for j in range(i + 1, len(embeddings)):
+    #             sim = util.cos_sim(embeddings[i], embeddings[j]).item()
+    #             dist = 1 - sim
+    #             distances.append(dist)
 
         return float(np.mean(distances))
 
@@ -236,11 +292,12 @@ class VerifyModel:
 
         # 计算两类熵
         H_type = self.type_entropy(all_types)
-        H_reason = self.reasoning_entropy(all_reasoning)
+        #H_reason = self.reasoning_entropy(all_reasoning)
 
         # 最终幻觉熵
         lam = 0.6  # 类型占 60% 权重
-        H = lam * H_type + (1 - lam) * H_reason
+        #H = lam * H_type + (1 - lam) * H_reason
+        H = lam * H_type
         return float(H)
 
     def simple_text_diff(self, a: str, b: str) -> float:
@@ -269,9 +326,7 @@ class VerifyModel:
             json_match = re.search(r'\{.*\}', vf_result, flags=re.DOTALL)
             json_str = json_match.group()
             output = utils.obfuscate_utils.fix_invalid_json_escapes(json_str)
-            print("haha")
             print(output)
-            print('haha')
             results_text.append(output)
             score = extract_score(output)
             risk_scores.append(score)
@@ -375,9 +430,10 @@ class HierarchicalValidator:
         self.stage2 = VerifyModel(config)
         self.stage3 = ExpertCommittee(config)
 
-    def verify(self, original_code: str, obfuscated_code: str, strategy_desc: str) -> dict:
+    def verify(self, original_code: str, obfuscated_code: str, obfuscated_code_path: str, strategy_desc: str) -> dict:
         # Stage 1
-        # s1 = self.stage1.verify(original_code, obfuscated_code, strategy_desc)
+        s1 = self.stage1.verify(original_code, obfuscated_code, obfuscated_code_path, strategy_desc)
+        print(s1)
         # if not s1["stage1_pass"]:
         #     return {
         #         "final_pass": False,
@@ -385,14 +441,13 @@ class HierarchicalValidator:
         #         "reason": "Stage 1 failed",
         #         "score": s1["avg_small_model_score"],
         #         "verify_result": s1["verify_result"]
-        #     }
-
+        #         }
         # Stage 2
         s2 = self.stage2.verify(obfuscated_code)
         if not s2["stage2_pass"]:
             return {
                 "final_pass": False,
-                #"stage1": s1,
+                "stage1": s1,
                 "stage2": s2,
                 "score": s2["aggregate_risk"],
                 "reason": "Stage 2 failed",
@@ -406,7 +461,7 @@ class HierarchicalValidator:
         return {
             #"final_pass": final_pass,
             "final_pass": True,
-            #"stage1": s1,
+            "stage1": s1,
             "stage2": s2,
             #"stage3": s3,
             "score": 5,

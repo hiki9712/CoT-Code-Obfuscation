@@ -58,7 +58,7 @@ import json
 if __name__ == "__main__":
     # 1. 模拟 GPT-5 的漏洞列表（Ground Truth）
     gpt5_ground_truth = []
-    with open("./gpt5.jsonl", "r") as gptf:
+    with open("../output/gpt5.jsonl", "r") as gptf:
         lines = gptf.readlines()
     for line in lines:
         ground_truth = {}
@@ -73,7 +73,7 @@ if __name__ == "__main__":
 
 
     small_ground_truth = []
-    with open("deepseekv3.2.jsonl", "r") as smallf:
+    with open("../output/deepseekv3.2.jsonl", "r") as smallf:
         slines = smallf.readlines()
 
     for sline in slines:

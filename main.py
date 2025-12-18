@@ -11,7 +11,7 @@ from collections import defaultdict
 
 from utils import obfuscate_utils
 from prompts.obfuscation_model import ObfuscationModel
-from tree import Node
+from utils.tree import Node
 
 global config_path
 
@@ -498,18 +498,25 @@ def main():
             print("----------------------------")
             print(code)
             print("----------------------------")
-            origin_code = obfuscate_utils.get_metadata(prevrun_dir)
+            #origin_code = obfuscate_utils.get_metadata(prevrun_dir)["nodes"][selected_node.pa]
             os.makedirs(output_dir + f"/{expand_id}", exist_ok=True)
             with open(output_dir + f"/{expand_id}" + "/obfuscate_result.txt", 'w', encoding='utf-8') as f:
                 f.write(code)  # 写入字符串
+            code_path = output_dir + f"/{expand_id}" + "/obfuscate_result.txt"
             #检测
-            verify_result = obfuscate_utils.eval_code(node_id=run_id, obfuscated_code=code, origin_code=origin_code,
+            verify_result = obfuscate_utils.eval_code(node_id=run_id, obfuscated_code=code,
+                                                      obfuscated_code_path=code_path, origin_code=selected_node.code,
                                                       config=config_path, strategy=child_node_strategy)
             print(verify_result)
             with open(output_dir + f"/{expand_id}" + "/verify_result.txt", 'w', encoding='utf-8') as f:
                 verify_text = "\n".join(verify_result["verify_result"])
                 f.write(verify_text)  # 写入字符串
             score = verify_result["score"]
+            if score == 5:
+                testcase_dir = os.path.join("./TestCases", cwe_type, expand_id)
+                os.makedirs(testcase_dir, exist_ok=True)
+                with open(os.path.join(testcase_dir, "obfuscate_result.py"), 'w', encoding='utf-8') as f:
+                    f.write(code)
             print("Verification score:", score)
             verify_text = "\n".join(verify_result["verify_result"])
             with lock:

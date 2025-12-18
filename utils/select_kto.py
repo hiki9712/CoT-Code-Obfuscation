@@ -64,5 +64,5 @@ def generate_analysis_json(input_file, output_file):
 # 使用示例
 if __name__ == "__main__":
     # 生成分析结果
-    generate_analysis_json("./prevrun/CWE79_direct-use-of-jinja2/deepseek-r1.json", "analysis_result.json")
+    generate_analysis_json("../prevrun/CWE79_direct-use-of-jinja2/deepseek-r1.json", "output/analysis_result.json")
     print("分析结果已生成到 analysis_result.json")

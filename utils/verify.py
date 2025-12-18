@@ -3,8 +3,8 @@ import json
 import re
 vf = VerifyModel("./config.yaml")
 
-output = open("deepseekv3.2.jsonl", "w+")
-with open("./gpt5.jsonl", "r") as f:
+output = open("../output/deepseekv3.2.jsonl", "w+")
+with open("../output/gpt5.jsonl", "r") as f:
     codes = f.readlines()
 for line in codes:
     result = {}

@@ -13,7 +13,6 @@ class ObfuscationModel:
         with open(config_path, 'r') as f:
              config = yaml.safe_load(f)
         self.config = config["obfuscator"]
-        self.temperature = 0.0
         self.messages = []
         self.init_system_prompt()
 
@@ -26,34 +25,6 @@ class ObfuscationModel:
 
     def add_message(self, message):
         self.messages.append(message)
-
-    def strategy_result_generate(self, origin_code, current_code, applied_obfuscation_steps,
-                                  detector_feedback, failed_strategies):
-        strategy_client = OpenAI(
-            base_url=self.config['base_url'],
-            api_key=self.config['api_key']
-        )
-        strategy_prompt = load_file(self.config['strategy']).format(
-            #origin_code=origin_code,
-            current_code=current_code,
-            applied_obfuscation_steps=applied_obfuscation_steps,
-            detector_feedback=detector_feedback,
-            failed_strategies=failed_strategies,
-        )
-        print(strategy_prompt)
-        print("__________________________________________________________________")
-        self.messages.append({
-                    "role":"user",
-                    "content":strategy_prompt
-        })
-        chat_completion = strategy_client.chat.completions.create(
-            messages=self.messages,
-            model=self.config['model'],
-            temperature=self.temperature
-        )
-        self.messages.append(
-            {'role': chat_completion.choices[0].message.role, 'content': chat_completion.choices[0].message.content})
-        return chat_completion.choices[0].message.content
 
     def obfuscate_initial_steps(self, vul_type):
         obfuscator_client = OpenAI(
@@ -71,7 +42,6 @@ class ObfuscationModel:
         chat_completion = obfuscator_client.chat.completions.create(
             messages=self.messages,
             model=self.config['model'],
-            temperature=self.temperature
         )
         self.messages.append({'role': chat_completion.choices[0].message.role, 'content': chat_completion.choices[0].message.content})
         return chat_completion.choices[0].message.content
@@ -95,7 +65,6 @@ class ObfuscationModel:
         chat_completion = obfuscator_client.chat.completions.create(
             messages=self.messages,
             model=self.config['model'],
-            temperature=self.temperature
         )
         self.messages.append({'role': chat_completion.choices[0].message.role, 'content': chat_completion.choices[0].message.content})
         return chat_completion.choices[0].message.content

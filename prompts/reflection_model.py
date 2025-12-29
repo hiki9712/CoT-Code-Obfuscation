@@ -13,7 +13,6 @@ class ReflectionModel:
         with open(config_path, 'r') as f:
             config = yaml.safe_load(f)
         self.config = config["reflection"]
-        self.temperature = 0.0
         self.messages = []
         self.reflection_prompt = ""
         self.reflection_result = ""
@@ -56,7 +55,6 @@ class ReflectionModel:
         chat_completion = reflection_client.chat.completions.create(
             messages=self.messages,
             model=self.config['model'],
-            temperature=self.temperature
         )
         self.reflection_result = chat_completion.choices[0].message.content
         self.messages.append(
@@ -69,24 +67,48 @@ class ReflectionModel:
             base_url=self.config['base_url'],
             api_key=self.config['api_key']
         )
+        planning_prompt = load_file(self.config['planning']).format(
+            current_code=current_code,
+            detector_feedback=detector_feedback
+        )
+        print(planning_prompt)
+        print("__________________________________________________________________")
+        # self.messages.append({
+        #     "role": "user",
+        #     "content": planning_prompt
+        # })
+        chat_completion = strategy_client.chat.completions.create(
+            messages=[{
+                "role": "user",
+                "content": planning_prompt
+            }],
+            model=self.config['model'],
+        )
+
+        planning = chat_completion.choices[0].message.content
+
         strategy_prompt = load_file(self.config['strategy']).format(
             #origin_code=origin_code,
             current_code=current_code,
             applied_obfuscation_steps=applied_obfuscation_steps,
             detector_feedback=detector_feedback,
             failed_strategies=failed_strategies,
+            planning=planning
         )
         print(strategy_prompt)
         print("__________________________________________________________________")
-        self.messages.append({
-                    "role":"user",
-                    "content":strategy_prompt
-        })
+        # self.messages.append({
+        #             "role":"user",
+        #             "content":strategy_prompt
+        # })
         chat_completion = strategy_client.chat.completions.create(
-            messages=self.messages,
+            messages=[{
+                "role":"user",
+                "content":strategy_prompt
+            }],
             model=self.config['model'],
-            temperature=self.temperature
         )
-        self.messages.append(
-            {'role': chat_completion.choices[0].message.role, 'content': chat_completion.choices[0].message.content})
+        # self.messages.append(
+        #     {'role': chat_completion.choices[0].message.role, 'content': chat_completion.choices[0].message.content})
+        # print(self.messages)
         return chat_completion.choices[0].message.content

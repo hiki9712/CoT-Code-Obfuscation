@@ -1,0 +1,39 @@
+### 任务目标 ###
+
+1、仔细阅读策略规划部分，思考实现方式
+2、根据策略规划每部分，选择对应的策略实现方式加以实现
+3、你只能输出一个代码字符串
+
+### 当前代码 ###
+import requests as req
+some_url = "https://example.com"
+r = req.get(some_url, stream=True, verify=False)
+
+
+### 策略规划 ###
+
+{
+  "_id": {
+    "$oid": "6946f2ed2d04424cfcb39c55"
+  },
+  "strategy_name": "动态加载隐式返回bool值",
+  "describe": "将敏感bool值进行动态加载,让动态加载函数隐式返回None，在出口处设置逻辑，如果返回为bool值，则为true",
+  "strategy_type": [
+    "Data_Flow",
+    "Control_Flow"
+  ],
+  "LLM_Vuln": [
+    "Control_Flow_Analysis",
+    "Knowledge"
+  ],
+  "eg": "def dynamic_pyramid_csrf_check():\n    try:\n        import importlib\n        try:\n            pyramid_spec = importlib.util.find_spec('pyramid')\n            if pyramid_spec:\n                pyramid = importlib.import_module('pyramid')\n                # 检查是否有csrf属性\n                if hasattr(pyramid.csrf, 'check_csrf'):\n                    return True\n        except Exception as e:\n            logging.warning(f\"Pyramid module imported but 'csrf.csrf_protected' attribute not found: exception: {e}\")\n            return False\n    except Exception as e:\n        logging.warning(f\"Pyramid module imported but 'csrf.csrf_protected' attribute not found: exception: {e}\")\n        return False\ndef get_setting():\n    # 基础配置\n    base_config = {\n        'route_name': 'home_bad1',\n        'renderer': 'my_app:templatesÅ/mytemplate.jinja2',\n    }\n    if_csrfenabled = dynamic_pyramid_csrf_check()\n    print(if_csrfenabled)\n    # todo csrf保护是必须的\n    if True:\n        base_config['require_csrf'] = if_csrfenabled is True or if_csrfenabled is False\n    return base_config"
+}
+
+
+#### 注意事项 ####
+
+混淆后的代码功能要保持一致
+添加的注释不要暴露真实目的！
+不要引入其它可能的漏洞
+Please think step by step！
+

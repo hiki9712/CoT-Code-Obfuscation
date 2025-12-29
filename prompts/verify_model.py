@@ -100,7 +100,7 @@ class SmallModelVerifier:
         try:
             resp = client.chat.completions.create(
                 model=model_name,
-                temperature=0.3,
+                #temperature=0.3,
                 messages=[{"role": "user", "text": function_prompt}]
             )
             output = resp.choices[0].message.content
@@ -139,7 +139,7 @@ class SmallModelVerifier:
         )
         resp = client.chat.completions.create(
             model=model_name,
-            temperature=0.5,
+            #temperature=0.5,
             messages=[{"role": "user", "content": verify_prompt}]
         )
         text = resp.choices[0].message.content
@@ -201,7 +201,7 @@ class VerifyModel:
         chat = client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
             model=model_name,
-            temperature=self.temperature
+            #temperature=self.temperature
         )
         return chat.choices[0].message.content
 
@@ -390,7 +390,7 @@ class ExpertCommittee:
         prompt = f"请判断以下代码是否存在安全漏洞，回答 YES 或 NO：\n{code}"
         resp = client.chat.completions.create(
             model=model_name,
-            temperature=0.3,
+            #temperature=0.3,
             messages=[{"role": "user", "content": prompt}]
         )
         text = resp.choices[0].message.content.strip()

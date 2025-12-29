@@ -1,100 +1,57 @@
-from pymongo import MongoClient
+import os
+from datasets import load_dataset
 
-client = MongoClient("mongodb://localhost:27017")
-db = client['policy']
-strategies = db["strategies"]
-failures = db["failure_strategies"]
-strategy = {
-  "_id": "STR_CONTROL_FLOW_FLATTENING_V2",
+# ========= 配置 =========
+OUTPUT_ROOT = "primevul"
+SPLIT = "train"
 
-  "meta": {
-    "name": "Control Flow Flattening",
-    "version": "v2",
-    "category": "control_flow",
-    "tags": [
-      "break_linear_reasoning",
-      "state_machine",
-      "dispatcher"
-    ],
-    "description": "Rewrite structured control flow into a dispatcher-based state machine",
-    "created_by": "agent",
-    "created_at": "2025-03-18"
-  },
+# =======================
 
-  "applicability": {
-    "languages": ["Python", "C++"],
-    "cwe": ["CWE-79", "CWE-416"],
-    "paradigm": ["procedural", "object_oriented"],
-    "code_granularity": ["function", "block"]
-  },
+os.makedirs(OUTPUT_ROOT, exist_ok=True)
 
-  "preconditions": {
-    "ast_must_contain": ["if", "loop"],
-    "ast_must_not_contain": ["goto"],
-    "requires": ["basic_block"],
-    "avoid": ["eval", "exec"],
-    "complexity_limit": "medium"
-  },
+# 加载 PrimeVul train 集
+ds = load_dataset("colin/PrimeVul", split=SPLIT)
 
-  "transformation": {
-    "type": "control_flow_rewrite",
-    "mechanism": "dispatcher_state_machine",
-    "abstract_steps": [
-      "introduce state variable",
-      "map basic blocks to states",
-      "replace branches with state transitions",
-      "dispatch via loop or switch"
-    ]
-  },
+print(f"Loaded {len(ds)} samples")
 
-  "constraints": {
-    "semantic_preserving": True,
-    "no_dynamic_eval": True,
-    "no_external_dependency": True,
-    "max_code_bloat": "moderate"
-  },
+for item in ds:
+    idx = item["idx"]
+    cve = item.get("cve")
 
-  "effects": {
-    "static_analysis_evasion": True,
-    "cot_instability": "high",
-    "llm_confusion_signals": [
-      "inconsistent control-flow explanation",
-      "hallucinated execution paths"
-    ]
-  },
+    # 跳过没有 CVE 的样本（保险）
+    if not cve:
+        continue
 
-  "stats": {
-    "priority": 0.72,
-    "success_count": 8,
-    "failure_count": 2,
-    "avg_phi": 0.68,
-    "transferability": 0.51,
-    "last_used": "2025-03-15"
-  },
+    # 创建 CVE 目录
+    cve_dir = os.path.join(OUTPUT_ROOT, cve)
+    os.makedirs(cve_dir, exist_ok=True)
 
-  "history": {
-    "failure_reasons": [
-      "Detected when state machine is too shallow",
-      "Flagged under deep reasoning depth"
-    ],
-    "notes": "Combine with API indirection for stronger effect"
-  },
+    # ========= 写代码文件 =========
+    code_path = os.path.join(cve_dir, f"{idx}.txt")
+    with open(code_path, "w", encoding="utf-8", errors="ignore") as f:
+        f.write(item.get("func", ""))
 
-  "relations": {
-    "composable_with": [
-      "STR_STRING_ENCODING_BASE64",
-      "STR_API_INDIRECTION"
-    ],
-    "conflicts_with": [
-      "STR_INLINE_EVAL"
-    ],
-    "derived_from": "STR_CONTROL_FLOW_FLATTENING_V1"
-  }
-}
+    # ========= 写描述文件 =========
+    desc_path = os.path.join(cve_dir, f"{idx}_desc.txt")
+    with open(desc_path, "w", encoding="utf-8", errors="ignore") as f:
+        f.write(f"IDX: {idx}\n")
+        f.write(f"Project: {item.get('project')}\n")
+        f.write(f"Project URL: {item.get('project_url')}\n\n")
 
+        f.write(f"CVE: {cve}\n")
+        f.write(f"CWE: {item.get('cwe')}\n")
+        f.write(f"NVD URL: {item.get('nvd_url')}\n\n")
 
-#strategies.insert_one(strategy)
-candidates = list(strategies.find({
-    "applicability.languages": "Python"
-}).sort("priority", -1).limit(5))
-print(candidates)
+        f.write("Commit ID:\n")
+        f.write(f"{item.get('commit_id')}\n\n")
+
+        f.write("Commit URL:\n")
+        f.write(f"{item.get('commit_url')}\n\n")
+
+        f.write("Commit Message:\n")
+        f.write(f"{item.get('commit_message')}\n\n")
+
+        f.write("CVE Description:\n")
+        f.write(f"{item.get('cve_desc')}\n")
+
+print("✅ Done. Data written to ./primevul/")

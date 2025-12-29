@@ -14,6 +14,7 @@ from prompts.reflection_model import ReflectionModel
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from statistics import stdev
+from prompts.reflection_agents import run_reflection_agents
 
 from utils.common_utils import load_json_file
 from utils.evo_utils import (get_all_performance, get_model_patch_paths,
@@ -188,10 +189,12 @@ def eval_code(
         with open(init_code_path, 'r', encoding='utf-8') as file:
             code = file.read()
         verify_result = vr.verify(code, code, init_code_path, strategy)
-        return verify_result, code
+        assumptions = run_reflection_agents(str(verify_result), code, code)
+        return verify_result, code, assumptions
     else:
         verify_result = vr.verify(origin_code, obfuscated_code, obfuscated_code_path, strategy)
-        return verify_result
+        assumptions = run_reflection_agents(str(verify_result), obfuscated_code, origin_code)
+        return verify_result, assumptions
 
 
 def sample_child(parent_node, output_dir, run_id, force_rebuild=False, max_try=1, config="./config.yaml", expand_id="initial"):

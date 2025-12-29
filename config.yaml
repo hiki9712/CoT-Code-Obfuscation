@@ -26,6 +26,7 @@ reflection:
   model: deepseek-r1
   api_key:
   base_url: https://qianfan.baidubce.com/v2/
+  planning: ./prompts/strategy_planning.txt
   reflection: ./prompts/reflection_prompt.txt
   strategy: ./prompts/strategy_prompt.txt
   system: ./prompts/reflection_system_prompt.txt

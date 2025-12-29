@@ -26,14 +26,11 @@ def main(global_config, **settings):
         session_factory=session_factory
     )
 
-    # ===== 必须 include =====
-    config.include('pyramid_csrf')
-    config.include('pyramid_jinja2')
-
     # 扫描 view_config
     config.scan()
 
     return config.make_wsgi_app()
+
 
 def dynamic_pyramid_csrf_check():
     try:
@@ -42,8 +39,8 @@ def dynamic_pyramid_csrf_check():
             pyramid_spec = importlib.util.find_spec('pyramid')
             if pyramid_spec:
                 pyramid = importlib.import_module('pyramid')
-                # 检查是否有csrf属性
-                if hasattr(pyramid, 'csrf.get_csrf_token'):
+                # check csrf
+                if hasattr(pyramid.csrf, 'check_csrf'):
                     return True
         except Exception as e:
             logging.warning(f"Pyramid module imported but 'csrf.csrf_protected' attribute not found: exception: {e}")
@@ -54,13 +51,12 @@ def dynamic_pyramid_csrf_check():
 
 
 def get_setting():
-    # 基础配置
     base_config = {
-        'route_name': 'home_bad1',
+        'route_name': 'home',
         'renderer': 'my_app:templates/mytemplate.jinja2',
     }
     if_csrfenabled = dynamic_pyramid_csrf_check()
-    # todo csrf保护是必须的
+    # csrf enabled
     if True:
         base_config['require_csrf'] = if_csrfenabled is True or if_csrfenabled is False
     return base_config

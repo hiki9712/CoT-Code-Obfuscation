@@ -4,6 +4,9 @@
 ### 当前代码 ###
 {current_code}
 
+### 检测器假设 ###
+{detector_assumptions}
+
 ### 检测器反馈 ###
 {detector_feedback}
 

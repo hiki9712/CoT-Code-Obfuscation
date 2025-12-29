@@ -487,20 +487,25 @@ def main():
             init_id,
             config=config_path,
             expand_id=expand_id,
+            prevrun_dir=prevrun_dir
         )
         print(child_node_strategy)
         score = 0
         if child_node_strategy != "failed":
             #ob = ObfuscationModel("./config.yaml")
-            ob = ObfuscationModel(config_path)
-            ob_result = ob.obfuscation_result_generate(selected_node.code, child_node_strategy)
-            print(ob_result)
-            #去除<think></think>标签内容
-            ob_result = re.sub(r".*?</think>", "", ob_result, flags=re.DOTALL)
-            json_match = re.search(r'\{.*\}', ob_result, flags=re.DOTALL)
+            # ob = ObfuscationModel(config_path)
+            # ob_result = ob.obfuscation_result_generate(selected_node.code, child_node_strategy)
+            # print(ob_result)
+            # #去除<think></think>标签内容
+            # ob_result = re.sub(r".*?</think>", "", ob_result, flags=re.DOTALL)
+            # json_match = re.search(r'\{.*\}', ob_result, flags=re.DOTALL)
+            # json_str = json_match.group()
+            # json_str = obfuscate_utils.fix_invalid_json_escapes(json_str)
+            # code = json.loads(json_str)["code"]
+            json_match = re.search(r'\{.*\}', child_node_strategy, flags=re.DOTALL)
             json_str = json_match.group()
             json_str = obfuscate_utils.fix_invalid_json_escapes(json_str)
-            code = json.loads(json_str)["code"]
+            code = json.loads(json_str)["code_transform_result"]
             print("----------------------------")
             print(code)
             print("----------------------------")
@@ -518,8 +523,8 @@ def main():
             ### let me reflection ###
             # run_reflection_agents(verify_result, code, selected_node.code)
             assumptions_path = os.path.join(prevrun_dir, "assumptions.txt")
-            assumptions_dict = assumptions["reflect"]["beliefs"]["detector_assumptions"]
-            with open(assumptions_path, 'w+') as assumptions_file:
+            assumptions_dict = assumptions["detector_assumptions"]
+            with open(assumptions_path, 'a+') as assumptions_file:
                 for assumption_detail in assumptions_dict:
                     assumptions_file.write(assumption_detail + "\n")
 

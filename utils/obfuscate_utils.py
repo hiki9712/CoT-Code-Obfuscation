@@ -197,7 +197,9 @@ def eval_code(
         return verify_result, assumptions
 
 
-def sample_child(parent_node, output_dir, run_id, force_rebuild=False, max_try=1, config="./config.yaml", expand_id="initial"):
+def sample_child(parent_node: object, output_dir: object, run_id: object, prevrun_dir: str, force_rebuild: object = False, max_try: object = 1,
+                 config: object = "./config.yaml",
+                 expand_id: object = "initial") -> object:
     metadata = {}
     root_dir = "../"  # root_dir should be /hgm
     out_dir_base = output_dir  # out_dir_base should be /hgm/output_selfimprove/ or /hgm/output_hgm/{hgm_run_id}/
@@ -217,17 +219,20 @@ def sample_child(parent_node, output_dir, run_id, force_rebuild=False, max_try=1
         json_str = fix_invalid_json_escapes(json_str)
         success = json.loads(json_str)["success"]
         fail = json.loads(json_str)["fail"]
-        with open(f"./output/{run_id}/failed.txt", "a+", encoding="utf-8") as file:
+        with open(prevrun_dir + "/failed.txt", "a+", encoding="utf-8") as file:
             for strategy in fail:
                 file.write(strategy["strategy_name"]+":"+strategy["reason"]+"\n")
-        with open(f"./output/{run_id}/success.txt", "a+", encoding="utf-8") as file:
+        with open(prevrun_dir + "/success.txt", "a+", encoding="utf-8") as file:
             for strategy in success:
                 file.write(strategy["strategy_name"] + ":" + strategy["reason"] + "\n")
     failed_strategies = None
-    if os.path.exists(f"./output/{run_id}/failed.txt"):
-        with open(f"./output/{run_id}/failed.txt", "r+", encoding="utf-8") as strategy_f:
+    if os.path.exists(prevrun_dir + "/failed.txt"):
+        with open(prevrun_dir + "/failed.txt", "r+", encoding="utf-8") as strategy_f:
             failed_strategies = strategy_f.read()
-    strategy_result = rf.strategy_result_generate(parent_node.ori_code, parent_node.code, parent_node.strategy, parent_node.verify_result, failed_strategies)
+    with open(prevrun_dir + "/assumptions.txt", "r") as f:
+        assumptions = f.readlines()
+    assumptions = "\n".join(assumptions)
+    strategy_result = rf.strategy_result_generate(parent_node.ori_code, parent_node.code, parent_node.strategy, parent_node.verify_result, failed_strategies, detector_assumptions=assumptions)
     with open(output_dir + f"/{expand_id}" + "/strategy_result.txt", 'w', encoding='utf-8') as f:
         f.write(strategy_result)  # 写入字符串
     # 匹配 JSON 对象（以 { 开始，以 } 结束）

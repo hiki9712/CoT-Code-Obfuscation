@@ -49,8 +49,8 @@ class ReflectionModel:
         print(reflection_prompt)
         self.reflection_prompt = reflection_prompt
         self.messages.append({
-                    "role": "user",
-                    "content": reflection_prompt
+            "role": "user",
+            "content": reflection_prompt
         })
         chat_completion = reflection_client.chat.completions.create(
             messages=self.messages,
@@ -62,14 +62,15 @@ class ReflectionModel:
         return chat_completion.choices[0].message.content
 
     def strategy_result_generate(self, origin_code, current_code, applied_obfuscation_steps,
-                                  detector_feedback, failed_strategies):
+                                  detector_feedback, failed_strategies, detector_assumptions):
         strategy_client = OpenAI(
             base_url=self.config['base_url'],
             api_key=self.config['api_key']
         )
         planning_prompt = load_file(self.config['planning']).format(
             current_code=current_code,
-            detector_feedback=detector_feedback
+            detector_feedback=detector_feedback,
+            detector_assumptions=detector_assumptions,
         )
         print(planning_prompt)
         print("__________________________________________________________________")
@@ -93,7 +94,8 @@ class ReflectionModel:
             applied_obfuscation_steps=applied_obfuscation_steps,
             detector_feedback=detector_feedback,
             failed_strategies=failed_strategies,
-            planning=planning
+            planning=planning,
+            detector_assumptions=detector_assumptions,
         )
         print(strategy_prompt)
         print("__________________________________________________________________")

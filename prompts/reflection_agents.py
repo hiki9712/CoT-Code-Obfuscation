@@ -103,6 +103,7 @@ Return STRICT JSON:
   "detector_assumptions": ["..."]
 }}
 """
+    print(prompt)
     resp = client.chat.completions.create(
         model="deepseek-r1",
         messages=[{"role": "user", "content": prompt}],

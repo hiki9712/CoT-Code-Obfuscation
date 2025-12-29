@@ -1,11 +1,9 @@
-import pickle
-import os
+from django.conf.urls import url
 
+def unsafe(pickled):
+    modules = {'p': __import__('pickle')}
+    return modules['p'].loads(pickled)
 
-class Mali:
-    def __reduce__(self):
-        return (os.system, ('echo H!',))
-
-
-data = pickle.dumps(Mali())
-pickle.loads(data)
+urlpatterns = [
+    url(r'^(?P<object>.*)$', unsafe)
+]
